@@ -1,0 +1,132 @@
+╔══════════════════════════════════════════════════════════════╗
+║      DORMITORY MANAGEMENT SYSTEM - QUICK START GUIDE         ║
+╚══════════════════════════════════════════════════════════════╝
+
+🚀 GETTING STARTED IN 5 MINUTES
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: START XAMPP
+────────────────────────────────────────────────────────────────
+  ✓ Open XAMPP Control Panel
+  ✓ Click "Start" for Apache
+  ✓ Click "Start" for MySQL
+  ✓ Wait for both to show "Running" status
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2: INSTALL DATABASE (AUTOMATIC)
+────────────────────────────────────────────────────────────────
+  ✓ Open browser
+  ✓ Go to: http://localhost/dormitory-management-system/database/install.php
+  ✓ Wait for "Installation Complete" message
+  ✓ Note the default credentials displayed
+  ✓ DELETE the install.php file after completion
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3: LOGIN
+────────────────────────────────────────────────────────────────
+  ✓ Go to: http://localhost/dormitory-management-system/login.php
+  
+  ADMIN CREDENTIALS:
+  • Email: admin@dormitory.com
+  • Password: Admin123!
+  
+  TENANT CREDENTIALS (for testing):
+  • Email: tenant@example.com
+  • Password: Tenant123!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 4: EXPLORE THE SYSTEM
+────────────────────────────────────────────────────────────────
+  AS ADMIN:
+  ✓ View Dashboard → See system statistics
+  ✓ Manage Rooms → Add new rooms
+  ✓ Manage Tenants → View tenant list
+  ✓ Process Bookings → Approve/reject requests
+  ✓ Track Payments → Monitor payment records
+  ✓ Post Announcements → Communicate with tenants
+  ✓ Generate Reports → View analytics
+  
+  AS TENANT:
+  ✓ Browse Rooms → View available rooms
+  ✓ Book a Room → Submit booking request
+  ✓ View Portal → Check booking status
+  ✓ Update Profile → Manage personal info
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 5: CUSTOMIZE
+────────────────────────────────────────────────────────────────
+  ✓ Change default passwords (IMPORTANT!)
+  ✓ Add your room inventory
+  ✓ Customize colors in assets/css/style.css
+  ✓ Add your logo to assets/images/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 IMPORTANT URLS
+────────────────────────────────────────────────────────────────
+  Home Page:      http://localhost/dormitory-management-system/
+  Login:          http://localhost/dormitory-management-system/login.php
+  Admin Panel:    http://localhost/dormitory-management-system/admin/dashboard.php
+  Tenant Portal:  http://localhost/dormitory-management-system/tenant/portal.php
+  phpMyAdmin:     http://localhost/phpmyadmin
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  TROUBLESHOOTING
+────────────────────────────────────────────────────────────────
+  Problem: "Database connection failed"
+  Solution: Check MySQL is running, verify config/database.php
+
+  Problem: "Page not found"
+  Solution: Ensure Apache is running, check project location
+
+  Problem: White screen
+  Solution: Check Apache error logs, enable PHP error display
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔒 SECURITY CHECKLIST
+────────────────────────────────────────────────────────────────
+  [ ] Changed admin password
+  [ ] Changed tenant test account password
+  [ ] Deleted database/install.php
+  [ ] Verified uploads/ directory permissions
+  [ ] Reviewed .gitignore settings
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTATION
+────────────────────────────────────────────────────────────────
+  README.md           → Complete project overview
+  INSTALL.md          → Detailed installation guide
+  PHASE1_SUMMARY.md   → Phase 1 completion details
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ FEATURES INCLUDED
+────────────────────────────────────────────────────────────────
+  ✓ User authentication (Admin & Tenant)
+  ✓ Room management system
+  ✓ Booking request system
+  ✓ Payment tracking
+  ✓ Announcement system
+  ✓ Reports & analytics
+  ✓ Responsive design
+  ✓ Security features (CSRF, XSS protection)
+  ✓ Flash messaging
+  ✓ Form validation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 YOU'RE ALL SET!
+
+Your dormitory management system is ready to use!
+
+For detailed documentation, see README.md and INSTALL.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
