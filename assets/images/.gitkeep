@@ -1,0 +1,9 @@
+# Images Directory
+
+This directory contains images and graphics used in the application:
+- Logo
+- Icons
+- Room photos
+- UI elements
+
+Place your images here and reference them in your HTML/CSS files.
