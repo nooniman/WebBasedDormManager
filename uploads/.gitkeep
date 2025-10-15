@@ -1,0 +1,8 @@
+# Uploads Directory
+
+This directory stores user-uploaded files such as:
+- Room photos
+- Tenant documents
+- Payment receipts
+
+**Security Note:** This directory is excluded from version control via .gitignore
