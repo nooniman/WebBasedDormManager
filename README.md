@@ -70,12 +70,12 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 ## Default Login Credentials
 
 ### Administrator Account
-- **Email**: admin@dormitory.com
-- **Password**: Admin123!
+- **Email**: nas@admin.com
+- **Password**: password
 
 ### Tenant Account (For Testing)
-- **Email**: tenant@example.com
-- **Password**: Tenant123!
+- **Email**: yuriko@tenant.com
+- **Password**: password
 
 **Important**: Change these default passwords immediately after first login!
 
