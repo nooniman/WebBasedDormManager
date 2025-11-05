@@ -24,7 +24,6 @@ dormitory-management-system/
 ├── login.php              ✅ Authentication
 ├── logout.php             ✅ Session management
 ├── README.md              ✅ Documentation
-├── INSTALL.md             ✅ Installation guide
 └── .gitignore             ✅ Git configuration
 ```
 
@@ -120,11 +119,6 @@ dormitory-management-system/
 - [x] Database schema documentation
 - [x] Security best practices guide
 
-#### 10. Installation Tools
-- [x] `database/install.php` - Automated database installer
-- [x] Default credentials setup
-- [x] Sample data insertion
-
 ### 🎯 Key Features
 
 1. **Responsive Design**: Works on desktop, tablet, and mobile
@@ -155,26 +149,7 @@ dormitory-management-system/
 7. Secure file uploads
 8. Input validation
 
-### 📦 Default Accounts
-
-**Administrator**
-- Email: `admin@dormitory.com`
-- Password: `Admin123!`
-- Role: Admin
-
-**Sample Tenant**
-- Email: `tenant@example.com`
-- Password: `Tenant123!`
-- Role: Tenant
-
 **⚠️ Change these passwords after installation!**
-
-### 🚀 Getting Started
-
-1. **Install XAMPP** and start Apache + MySQL
-2. **Run Database Installer**: Visit `http://localhost/dormitory-management-system/database/install.php`
-3. **Login**: Visit `http://localhost/dormitory-management-system/login.php`
-4. **Explore**: Use admin account to add rooms and manage the system
 
 ### ✨ Next Steps (Future Phases)
 

@@ -209,8 +209,10 @@ require_once 'includes/header.php';
                     <div class="form-group">
                         <label class="form-label" for="login_password">Password</label>
                         <input type="password" id="login_password" name="password" class="form-control" required>
+                        <small class="text-right mt-1" style="display: block;">
+                            <a href="password_reset_request.php">Forgot password?</a>
+                        </small>
                     </div>
-                    
                     <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
                 </form>
             </div>
