@@ -229,7 +229,7 @@ dormitory-management-system/
 - [x] Phase 2: User Authentication System
 - [x] Phase 3: Room Management Module
 - [ ] Phase 4: Enhanced Booking System (calendar view, conflicts)
-- [ ] Phase 5: Payment Integration (online payments, receipts)
+- [ ] Phase 5: Payment Integration (payments, receipts)
 - [ ] Phase 6: Email Notifications (SMTP integration)
 - [ ] Phase 7: Advanced Reports (charts, PDF exports)
 - [ ] Phase 8: Maintenance Request System
