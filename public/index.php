@@ -7,7 +7,7 @@ require_once '../includes/header.php';
     <!-- Hero Section -->
     <section style="text-align: center; padding: 4rem 0;">
         <h1 style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary-color);">
-            Welcome to Dormitory Management System
+            Welcome to Dormitory Management System Hello World
         </h1>
         <p style="font-size: 1.25rem; color: var(--text-light); max-width: 600px; margin: 0 auto 2rem;">
             Find your perfect room, manage your bookings, and enjoy a seamless dormitory experience.
