@@ -9,13 +9,13 @@ require_once '../includes/header.php';
 
 $tenant_id = $_SESSION['user_id'];
 
-// Get tenant's current booking
+// Get tenant's current booking (approved or checked_in)
 $booking_query = "
     SELECT b.*, r.room_number, r.room_type, r.price, r.floor_number,
            (SELECT photo_path FROM room_photos WHERE room_id = r.id AND is_primary = 1 LIMIT 1) as room_photo
     FROM bookings b 
     JOIN rooms r ON b.room_id = r.id 
-    WHERE b.tenant_id = ? AND b.status = 'approved'
+    WHERE b.tenant_id = ? AND b.status IN ('approved', 'checked_in')
     ORDER BY b.created_at DESC
     LIMIT 1
 ";
@@ -38,6 +38,21 @@ $stmt = $conn->prepare($pending_query);
 $stmt->bind_param("i", $tenant_id);
 $stmt->execute();
 $pending_result = $stmt->get_result();
+$stmt->close();
+
+// Get all bookings count for statistics
+$bookings_stats_query = "
+    SELECT 
+        COUNT(*) as total_bookings,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_bookings,
+        SUM(CASE WHEN status IN ('approved', 'checked_in') THEN 1 ELSE 0 END) as active_bookings
+    FROM bookings 
+    WHERE tenant_id = ?
+";
+$stmt = $conn->prepare($bookings_stats_query);
+$stmt->bind_param("i", $tenant_id);
+$stmt->execute();
+$bookings_stats = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 // Get payment statistics
@@ -109,6 +124,23 @@ $announcements = $conn->query("
     object-fit: cover;
     border-radius: var(--border-radius);
 }
+
+.info-box {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
 </style>
 
 <div class="container">
@@ -117,18 +149,18 @@ $announcements = $conn->query("
     <!-- Statistics -->
     <div class="grid grid-3 mb-4">
         <div class="stat-card">
-            <div class="stat-value"><?php echo $payment_stats['total_payments'] ?? 0; ?></div>
-            <div class="stat-label">Total Payments</div>
+            <div class="stat-value"><?php echo $bookings_stats['total_bookings'] ?? 0; ?></div>
+            <div class="stat-label">Total Bookings</div>
         </div>
         
         <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
-            <div class="stat-value"><?php echo format_currency($payment_stats['total_paid'] ?? 0); ?></div>
-            <div class="stat-label">Total Paid</div>
+            <div class="stat-value"><?php echo $bookings_stats['active_bookings'] ?? 0; ?></div>
+            <div class="stat-label">Active Bookings</div>
         </div>
         
         <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-            <div class="stat-value"><?php echo format_currency($payment_stats['pending_amount'] ?? 0); ?></div>
-            <div class="stat-label">Pending Payments</div>
+            <div class="stat-value"><?php echo $bookings_stats['pending_bookings'] ?? 0; ?></div>
+            <div class="stat-label">Pending Bookings</div>
         </div>
     </div>
     
@@ -144,11 +176,15 @@ $announcements = $conn->query("
                         <?php if ($current_booking['room_photo']): ?>
                             <img src="../uploads/<?php echo htmlspecialchars($current_booking['room_photo']); ?>" 
                                  alt="Room" class="room-photo-small">
+                        <?php else: ?>
+                            <div style="width: 80px; height: 80px; background: #e5e7eb; border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                                🏠
+                            </div>
                         <?php endif; ?>
                         <div>
                             <h3 style="margin-bottom: 0.25rem;">Room <?php echo htmlspecialchars($current_booking['room_number']); ?></h3>
                             <p style="color: var(--text-light); margin: 0; font-size: 0.875rem;">
-                                <?php echo htmlspecialchars($current_booking['room_type']); ?>
+                                <?php echo ucfirst(htmlspecialchars($current_booking['room_type'])); ?>
                                 <?php if ($current_booking['floor_number']): ?>
                                     • Floor <?php echo $current_booking['floor_number']; ?>
                                 <?php endif; ?>
@@ -156,26 +192,50 @@ $announcements = $conn->query("
                         </div>
                     </div>
                     
-                    <div style="background: #f9fafb; padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem;">
-                        <p style="margin-bottom: 0.5rem;">
-                            <strong>Monthly Rate:</strong> <?php echo format_currency($current_booking['price']); ?>
-                        </p>
-                        <p style="margin-bottom: 0.5rem;">
-                            <strong>Start Date:</strong> <?php echo format_date($current_booking['start_date']); ?>
-                        </p>
-                        <p style="margin-bottom: 0;">
-                            <strong>Status:</strong> 
-                            <span class="badge badge-success">Active</span>
-                        </p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span><strong>Monthly Rate:</strong></span>
+                            <span><?php echo format_currency($current_booking['price']); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span><strong>Start Date:</strong></span>
+                            <span><?php echo format_date($current_booking['start_date']); ?></span>
+                        </div>
+                        <?php if ($current_booking['end_date']): ?>
+                        <div class="info-row">
+                            <span><strong>End Date:</strong></span>
+                            <span><?php echo format_date($current_booking['end_date']); ?></span>
+                        </div>
+                        <?php endif; ?>
+                        <div class="info-row">
+                            <span><strong>Status:</strong></span>
+                            <span>
+                                <?php if ($current_booking['status'] === 'checked_in'): ?>
+                                    <span class="badge badge-success">Checked In</span>
+                                <?php else: ?>
+                                    <span class="badge badge-info">Approved</span>
+                                <?php endif; ?>
+                            </span>
+                        </div>
                     </div>
                     
-                    <a href="../public/room_view.php?id=<?php echo $current_booking['room_id']; ?>" 
-                       class="btn btn-outline" style="width: 100%;">
-                        View Room Details
-                    </a>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="bookings.php" class="btn btn-primary" style="flex: 1;">
+                            View Details
+                        </a>
+                        <a href="../public/room_view.php?id=<?php echo $current_booking['room_id']; ?>" 
+                           class="btn btn-outline" style="flex: 1;">
+                            Room Info
+                        </a>
+                    </div>
                 <?php else: ?>
-                    <p style="margin-bottom: 1rem;">You don't have an active booking.</p>
-                    <a href="../public/rooms.php" class="btn btn-primary" style="width: 100%;">Browse Available Rooms</a>
+                    <div style="text-align: center; padding: 2rem 1rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🏠</div>
+                        <p style="margin-bottom: 1rem; color: var(--text-light);">You don't have an active booking.</p>
+                        <a href="../public/rooms.php" class="btn btn-primary" style="width: 100%;">
+                            Browse Available Rooms
+                        </a>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -188,23 +248,35 @@ $announcements = $conn->query("
             <div class="card-body">
                 <?php if ($pending_result && $pending_result->num_rows > 0): ?>
                     <?php while ($pending = $pending_result->fetch_assoc()): ?>
-                        <div style="background: #fef3c7; padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem;">
+                        <div style="background: #fef3c7; padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
                             <h4 style="margin-bottom: 0.5rem;">Room <?php echo htmlspecialchars($pending['room_number']); ?></h4>
                             <p style="margin-bottom: 0.5rem; font-size: 0.875rem;">
-                                <?php echo htmlspecialchars($pending['room_type']); ?> • 
-                                <?php echo format_currency($pending['price']); ?>/mo
+                                <?php echo ucfirst(htmlspecialchars($pending['room_type'])); ?> • 
+                                <?php echo format_currency($pending['price']); ?>/month
                             </p>
-                            <p style="margin-bottom: 0; font-size: 0.875rem; color: var(--text-light);">
+                            <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-light);">
                                 Requested on <?php echo format_date($pending['created_at']); ?>
                             </p>
-                            <span class="badge badge-warning" style="margin-top: 0.5rem;">Awaiting Approval</span>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="badge badge-warning">Awaiting Approval</span>
+                                <a href="view_booking_details.php?id=<?php echo $pending['id']; ?>" 
+                                   class="btn btn-sm btn-outline">
+                                    View Details
+                                </a>
+                            </div>
                         </div>
                     <?php endwhile; ?>
-                <?php else: ?>
-                    <p>No pending booking requests.</p>
-                    <a href="../public/rooms.php" class="btn btn-outline" style="width: 100%; margin-top: 1rem;">
-                        Browse Rooms
+                    <a href="bookings.php" class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;">
+                        View All Bookings
                     </a>
+                <?php else: ?>
+                    <div style="text-align: center; padding: 2rem 1rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+                        <p style="margin-bottom: 1rem; color: var(--text-light);">No pending booking requests.</p>
+                        <a href="../public/rooms.php" class="btn btn-outline" style="width: 100%;">
+                            Browse Rooms
+                        </a>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -247,7 +319,7 @@ $announcements = $conn->query("
                     </table>
                 </div>
             <?php else: ?>
-                <p>No payment records yet.</p>
+                <p style="text-align: center; padding: 2rem; color: var(--text-light);">No payment records yet.</p>
             <?php endif; ?>
         </div>
     </div>
@@ -262,14 +334,14 @@ $announcements = $conn->query("
                 <a href="../public/rooms.php" class="btn btn-primary">
                     🏠 Browse Rooms
                 </a>
+                <a href="bookings.php" class="btn btn-outline">
+                    📋 My Bookings
+                </a>
                 <a href="profile.php" class="btn btn-outline">
                     👤 Update Profile
                 </a>
                 <a href="payments.php" class="btn btn-outline">
                     💳 View Payments
-                </a>
-                <a href="../logout.php" class="btn btn-secondary">
-                    🚪 Logout
                 </a>
             </div>
         </div>
@@ -303,7 +375,7 @@ $announcements = $conn->query("
                     </div>
                 <?php endwhile; ?>
             <?php else: ?>
-                <p>No announcements at the moment.</p>
+                <p style="text-align: center; padding: 2rem; color: var(--text-light);">No announcements at the moment.</p>
             <?php endif; ?>
         </div>
     </div>

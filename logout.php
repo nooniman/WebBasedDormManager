@@ -1,5 +1,8 @@
 <?php
 session_start();
+require_once 'includes/auth0_functions.php';
+
+$auth_method = $_SESSION['auth_method'] ?? 'standard';
 
 // Destroy all session data
 $_SESSION = array();
@@ -12,7 +15,11 @@ if (isset($_COOKIE[session_name()])) {
 // Destroy the session
 session_destroy();
 
-// Redirect to login page
-header("Location: login.php");
+// If logged in via Auth0, logout from Auth0 as well
+if ($auth_method === 'auth0') {
+    $auth0 = get_auth0_instance();
+    $auth0->logout('http://' . $_SERVER['HTTP_HOST'] . '/dormitory-management-system/login.php');
+} else {
+    header("Location: login.php");
+}
 exit();
-?>

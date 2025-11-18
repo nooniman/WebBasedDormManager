@@ -1,5 +1,10 @@
 # Configuration files with sensitive data
 config/database.php
+config/auth0_config.php
+
+# Composer
+/vendor/
+composer.lock
 
 # User uploaded files
 uploads/*

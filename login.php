@@ -2,6 +2,7 @@
 session_start();
 require_once 'config/database.php';
 require_once 'includes/functions.php';
+require_once 'includes/auth0_functions.php';
 
 // Redirect if already logged in
 if (is_logged_in()) {
@@ -12,8 +13,28 @@ if (is_logged_in()) {
     }
 }
 
-$error = '';
+$error = $_SESSION['error'] ?? '';
+unset($_SESSION['error']);
 $success = '';
+
+// Handle Auth0 Login - Must be before any output
+if (isset($_GET['auth0_login'])) {
+    try {
+        $auth0 = get_auth0_instance();
+        
+        // Generate the Auth0 login URL and redirect
+        header('Location: ' . $auth0->login());
+        exit();
+    } catch (Exception $e) {
+        error_log('Auth0 Login Error: ' . $e->getMessage());
+        $_SESSION['error'] = 'Unable to connect to Auth0. Please try again.';
+        header('Location: login.php');
+        exit();
+    }
+}
+
+// Initialize Auth0 for other uses
+$auth0 = get_auth0_instance();
 
 // Handle Login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
@@ -151,6 +172,51 @@ require_once 'includes/header.php';
     background-color: #f5f5f5;
 }
 
+.divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #e0e0e0;
+}
+
+.divider span {
+    background: white;
+    padding: 0 1rem;
+    position: relative;
+    color: #666;
+}
+
+.btn-auth0 {
+    background: #eb5424;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+    text-decoration: none;
+}
+
+.btn-auth0:hover {
+    background: #d14820;
+    color: white;
+}
+
 .tab-content {
     display: none;
 }
@@ -188,6 +254,18 @@ require_once 'includes/header.php';
                     <?php echo htmlspecialchars($success); ?>
                 </div>
             <?php endif; ?>
+
+            <!-- Auth0 SSO Button -->
+            <a href="?auth0_login=1" class="btn-auth0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21.98 7.448L19.62 0H4.347L2.02 7.448c-1.352 4.312.03 9.206 3.815 12.015L12.007 24l6.157-4.537c3.786-2.81 5.167-7.703 3.815-12.015z"/>
+                </svg>
+                Continue with Auth0 SSO
+            </a>
+            
+            <div class="divider">
+                <span>OR</span>
+            </div>
             
             <!-- Auth Tabs -->
             <div class="auth-tabs">

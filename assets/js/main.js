@@ -44,6 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
             previewImage(this);
         });
     });
+    
+    // Initialize booking calendar functionality
+    initBookingCalendar();
 });
 
 /**
@@ -199,4 +202,92 @@ function hideLoading() {
     if (loader) {
         loader.remove();
     }
+}
+
+/**
+ * Booking calendar integration
+ */
+function initBookingCalendar() {
+    const bookingForm = document.getElementById('bookingForm');
+    
+    if (bookingForm) {
+        const startDateInput = bookingForm.querySelector('#start_date');
+        const endDateInput = bookingForm.querySelector('#end_date');
+        const roomId = bookingForm.querySelector('[name="room_id"]')?.value;
+        
+        if (startDateInput && endDateInput) {
+            // Real-time availability checking
+            const checkAvailability = debounce(async function() {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                
+                if (!startDate || !endDate || !roomId) return;
+                
+                const availabilityIndicator = document.getElementById('availabilityIndicator');
+                if (availabilityIndicator) {
+                    availabilityIndicator.innerHTML = '<span class="loading">Checking availability...</span>';
+                }
+                
+                try {
+                    const response = await fetch('../api/check_availability.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            room_id: roomId,
+                            start_date: startDate,
+                            end_date: endDate
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (availabilityIndicator) {
+                        if (data.available) {
+                            availabilityIndicator.innerHTML = '<span class="available">✓ Room is available</span>';
+                            availabilityIndicator.className = 'availability-message success';
+                        } else {
+                            availabilityIndicator.innerHTML = '<span class="unavailable">✗ Room is not available for these dates</span>';
+                            availabilityIndicator.className = 'availability-message error';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Availability check failed:', error);
+                }
+            }, 500);
+            
+            startDateInput.addEventListener('change', checkAvailability);
+            endDateInput.addEventListener('change', checkAvailability);
+        }
+    }
+}
+
+/**
+ * Debounce function for performance
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+
+/**
+ * Calculate date difference in months
+ */
+function calculateMonthsDifference(startDate, endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    const months = (end.getFullYear() - start.getFullYear()) * 12 
+                   + (end.getMonth() - start.getMonth());
+    
+    return Math.max(1, months);
 }
