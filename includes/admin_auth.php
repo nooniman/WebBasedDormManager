@@ -1,26 +1,26 @@
 <?php
 /**
  * Admin Authentication Guard
- * 
- * Include this file at the top of admin pages to protect them.
  */
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Include environment for URL constants
+require_once __DIR__ . '/../config/environment.php';
+
 // Check if user is logged in and is an admin
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    // Redirect to login page
-    header("Location: /dormitory-management-system/login.php");
+    header("Location: " . LOGIN_URL);
     exit();
 }
 
-// Regenerate session ID to prevent session fixation
+// Regenerate session ID
 if (!isset($_SESSION['last_regeneration'])) {
     session_regenerate_id(true);
     $_SESSION['last_regeneration'] = time();
-} elseif (time() - $_SESSION['last_regeneration'] > 300) { // Every 5 minutes
+} elseif (time() - $_SESSION['last_regeneration'] > 300) {
     session_regenerate_id(true);
     $_SESSION['last_regeneration'] = time();
 }

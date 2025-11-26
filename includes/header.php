@@ -30,7 +30,7 @@ if (isset($_SESSION['user_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>Dormitory Management System</title>
-    <link rel="stylesheet" href="/dormitory-management-system/assets/css/style.css">
+    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -581,7 +581,7 @@ if (isset($_SESSION['user_id'])) {
                         <path d="M12 3L2 9v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9l-10-6zM12 5.84L19 10v10H5V10l7-4.16zM7 12h10v2H7v-2zm0 4h10v2H7v-2z"/>
                     </svg>
                 </div>
-                <a href="/dormitory-management-system/">
+                <a href="<?php echo BASE_URL; ?>/">
                     <div class="brand-text">
                         <div class="brand-title">DormitoryMS</div>
                         <div class="brand-subtitle">Management System</div>
@@ -595,40 +595,40 @@ if (isset($_SESSION['user_id'])) {
             
             <ul class="nav-menu" id="navMenu">
                 <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-                    <li><a href="/dormitory-management-system/admin/dashboard.php" <?php echo basename($_SERVER['PHP_SELF']) === 'dashboard.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo ADMIN_URL; ?>/dashboard.php" <?php echo basename($_SERVER['PHP_SELF']) === 'dashboard.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                         Dashboard
                     </a></li>
-                    <li><a href="/dormitory-management-system/admin/tenants.php" <?php echo basename($_SERVER['PHP_SELF']) === 'tenants.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo ADMIN_URL; ?>/tenants.php" <?php echo basename($_SERVER['PHP_SELF']) === 'tenants.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
                         Tenants
                     </a></li>
-                    <li><a href="/dormitory-management-system/admin/rooms.php" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo ADMIN_URL; ?>/rooms.php" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9.3V4h-3v2.6L12 3 2 12h3v8h6v-6h2v6h6v-8h3l-3-2.7zM17 18h-2v-6H9v6H7v-7.81l5-4.5 5 4.5V18z"/></svg>
                         Rooms
                     </a></li>
-                    <li><a href="/dormitory-management-system/admin/bookings.php" <?php echo basename($_SERVER['PHP_SELF']) === 'bookings.php' || basename($_SERVER['PHP_SELF']) === 'view_booking.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo ADMIN_URL; ?>/bookings.php" <?php echo basename($_SERVER['PHP_SELF']) === 'bookings.php' || basename($_SERVER['PHP_SELF']) === 'view_booking.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
                         Bookings
                     </a></li>
-                    <li><a href="/dormitory-management-system/admin/payments.php" <?php echo basename($_SERVER['PHP_SELF']) === 'payments.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo ADMIN_URL; ?>/payments.php" <?php echo basename($_SERVER['PHP_SELF']) === 'payments.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
                         Payments
                     </a></li>
-                    <li><a href="/dormitory-management-system/admin/announcements.php" <?php echo basename($_SERVER['PHP_SELF']) === 'announcements.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo ADMIN_URL; ?>/announcements.php" <?php echo basename($_SERVER['PHP_SELF']) === 'announcements.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
                         Announcements
                     </a></li>
-                    <li><a href="/dormitory-management-system/admin/reports.php" <?php echo basename($_SERVER['PHP_SELF']) === 'reports.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo ADMIN_URL; ?>/reports.php" <?php echo basename($_SERVER['PHP_SELF']) === 'reports.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
                         Reports
                     </a></li>
                     <li>
-                        <a href="/dormitory-management-system/admin/profile.php" class="user-profile-btn">
+                        <a href="<?php echo ADMIN_URL; ?>/profile.php" class="user-profile-btn">
                             <div class="avatar-wrapper">
                                 <div class="user-avatar admin-avatar">
                                     <?php if ($has_user_pic): ?>
-                                        <img src="/dormitory-management-system/uploads/<?php echo htmlspecialchars($user_profile_pic); ?>?v=<?php echo time(); ?>" alt="Profile">
+                                        <img src="<?php echo UPLOADS_URL; ?>/<?php echo htmlspecialchars($user_profile_pic); ?>?v=<?php echo time(); ?>" alt="Profile">
                                     <?php else: ?>
                                         <span class="user-avatar-initial"><?php echo strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)); ?></span>
                                     <?php endif; ?>
@@ -638,33 +638,33 @@ if (isset($_SESSION['user_id'])) {
                             <span class="user-name"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Admin'); ?></span>
                         </a>
                     </li>
-                    <li><a href="/dormitory-management-system/logout.php" class="logout-btn">
+                    <li><a href="<?php echo LOGOUT_URL; ?>" class="logout-btn">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
                         Logout
                     </a></li>
                 <?php elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'tenant'): ?>
-                    <li><a href="/dormitory-management-system/tenant/portal.php" <?php echo basename($_SERVER['PHP_SELF']) === 'portal.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo TENANT_URL; ?>/portal.php" <?php echo basename($_SERVER['PHP_SELF']) === 'portal.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                         Portal
                     </a></li>
-                    <li><a href="/dormitory-management-system/public/rooms.php" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo PUBLIC_URL; ?>/rooms.php" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                         Browse Rooms
                     </a></li>
-                    <li><a href="/dormitory-management-system/tenant/bookings.php" <?php echo basename($_SERVER['PHP_SELF']) === 'bookings.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo TENANT_URL; ?>/bookings.php" <?php echo basename($_SERVER['PHP_SELF']) === 'bookings.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
                         My Bookings
                     </a></li>
-                    <li><a href="/dormitory-management-system/tenant/payments.php" <?php echo basename($_SERVER['PHP_SELF']) === 'payments.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo TENANT_URL; ?>/payments.php" <?php echo basename($_SERVER['PHP_SELF']) === 'payments.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
                         Payments
                     </a></li>
                     <li>
-                        <a href="/dormitory-management-system/tenant/profile.php" class="user-profile-btn">
+                        <a href="<?php echo TENANT_URL; ?>/profile.php" class="user-profile-btn">
                             <div class="avatar-wrapper">
                                 <div class="user-avatar">
                                     <?php if ($has_user_pic): ?>
-                                        <img src="/dormitory-management-system/uploads/<?php echo htmlspecialchars($user_profile_pic); ?>?v=<?php echo time(); ?>" alt="Profile">
+                                        <img src="<?php echo UPLOADS_URL; ?>/<?php echo htmlspecialchars($user_profile_pic); ?>?v=<?php echo time(); ?>" alt="Profile">
                                     <?php else: ?>
                                         <span class="user-avatar-initial"><?php echo strtoupper(substr($_SESSION['full_name'] ?? 'T', 0, 1)); ?></span>
                                     <?php endif; ?>
@@ -674,20 +674,20 @@ if (isset($_SESSION['user_id'])) {
                             <span class="user-name"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Tenant'); ?></span>
                         </a>
                     </li>
-                    <li><a href="/dormitory-management-system/logout.php" class="logout-btn">
+                    <li><a href="<?php echo LOGOUT_URL; ?>" class="logout-btn">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
                         Logout
                     </a></li>
                 <?php else: ?>
-                    <li><a href="/dormitory-management-system/" <?php echo basename($_SERVER['PHP_SELF']) === 'index.php' && strpos($_SERVER['PHP_SELF'], 'public') !== false ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo BASE_URL; ?>/" <?php echo basename($_SERVER['PHP_SELF']) === 'index.php' && strpos($_SERVER['PHP_SELF'], 'public') !== false ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                         Home
                     </a></li>
-                    <li><a href="/dormitory-management-system/public/rooms.php" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo PUBLIC_URL; ?>/rooms.php" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                         Rooms
                     </a></li>
-                    <li><a href="/dormitory-management-system/login.php" <?php echo basename($_SERVER['PHP_SELF']) === 'login.php' ? 'class="active"' : ''; ?>>
+                    <li><a href="<?php echo LOGIN_URL; ?>" <?php echo basename($_SERVER['PHP_SELF']) === 'login.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
                         Login
                     </a></li>

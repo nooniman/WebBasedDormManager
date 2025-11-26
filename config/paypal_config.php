@@ -1,6 +1,9 @@
 <?php
 // filepath: c:\xampp\htdocs\dormitory-management-system\config\paypal_config.php
 
+// Include environment for dynamic URLs
+require_once __DIR__ . '/environment.php';
+
 return [
     // Set to 'sandbox' for testing, 'live' for production
     'mode' => 'sandbox',
@@ -13,13 +16,13 @@ return [
     
     // Live credentials
     'live' => [
-        'client_id' => 'ooga',
-        'client_secret' => 'booga',
+        'client_id' => 'your-live-client-id',
+        'client_secret' => 'your-live-client-secret',
     ],
     
-    // URLs
-    'return_url' => 'http://localhost/dormitory-management-system/tenant/payment_success.php',
-    'cancel_url' => 'http://localhost/dormitory-management-system/tenant/payment_cancel.php',
+    // Dynamic URLs based on environment
+    'return_url' => PAYPAL_RETURN_URL,
+    'cancel_url' => PAYPAL_CANCEL_URL,
     
     // Currency
     'currency' => 'PHP',
