@@ -8,7 +8,7 @@ $page_title = 'Check Booking Conflicts';
 
 if (!isset($_GET['booking_id'])) {
     set_flash_message('Invalid booking ID', 'error');
-    redirect('bookings');
+    redirect('admin/bookings');
 }
 
 $booking_id = intval($_GET['booking_id']);
@@ -29,7 +29,7 @@ $stmt->close();
 
 if (!$booking) {
     set_flash_message('Booking not found', 'error');
-    redirect('bookings');
+    redirect('admin/bookings');
 }
 
 // Detect conflicts

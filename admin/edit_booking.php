@@ -9,7 +9,7 @@ $page_title = 'Edit Booking';
 // Get booking ID
 if (!isset($_GET['id'])) {
     set_flash_message('Invalid booking ID', 'error');
-    redirect('bookings');
+    redirect('admin/bookings');
 }
 
 $booking_id = intval($_GET['id']);
@@ -28,7 +28,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     set_flash_message('Booking not found', 'error');
-    redirect('bookings');
+    redirect('admin/bookings');
 }
 
 $booking = $result->fetch_assoc();
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($update_stmt->execute()) {
             set_flash_message('Booking updated successfully', 'success');
-            redirect('view_booking?id=' . $booking_id);
+            redirect('admin/view_booking?id=' . $booking_id);
         } else {
             $error = 'Failed to update booking';
         }

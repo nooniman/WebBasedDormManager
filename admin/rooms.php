@@ -62,7 +62,7 @@ if (isset($_GET['delete']) && verify_csrf_token($_GET['csrf_token'])) {
         $stmt->close();
     }
     
-    redirect('rooms');
+    redirect('admin/rooms');
 }
 
 // Handle room addition/update
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         $stmt->close();
-        redirect('rooms');
+        redirect('admin/rooms');
     }
 }
 

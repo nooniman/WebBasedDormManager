@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 set_flash_message('Room added successfully! 🎉', 'success');
-                redirect('room_details?id=' . $new_room_id);
+                redirect('admin/room_details?id=' . $new_room_id);
             } else {
                 $errors[] = "Failed to add room: " . $stmt->error;
             }

@@ -11,7 +11,7 @@ $success = '';
 
 // Get room details
 if (!isset($_GET['room_id'])) {
-    redirect('rooms');
+    redirect('public/rooms');
 }
 
 $room_id = intval($_GET['room_id']);
@@ -28,7 +28,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     set_flash_message('Room not available', 'error');
-    redirect('rooms');
+    redirect('public/rooms');
 }
 
 $room = $result->fetch_assoc();
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $admin_stmt->close();
                     
                     set_flash_message('Booking request submitted successfully!', 'success');
-                    redirect('../tenant/bookings');
+                    redirect('tenant/bookings');
                 } else {
                     $error = 'Failed to submit booking request';
                 }

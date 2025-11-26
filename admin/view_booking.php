@@ -9,7 +9,7 @@ $page_title = 'Booking Details';
 // Get booking ID
 if (!isset($_GET['id'])) {
     set_flash_message('Invalid booking ID', 'error');
-    redirect('bookings');
+    redirect('admin/bookings');
 }
 
 $booking_id = intval($_GET['id']);
@@ -34,7 +34,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     set_flash_message('Booking not found', 'error');
-    redirect('bookings');
+    redirect('admin/bookings');
 }
 
 $booking = $result->fetch_assoc();

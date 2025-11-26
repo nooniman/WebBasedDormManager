@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute()) {
                 $_SESSION['full_name'] = $first_name . ' ' . $last_name;
                 set_flash_message('Profile updated successfully! 🎉', 'success');
-                redirect("profile");
+                redirect("admin/profile");
             } else {
                 $errors[] = "Failed to update profile";
             }
@@ -69,13 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validate file type
         if (!in_array($file_ext, $allowed_types)) {
             set_flash_message('Invalid file type. Please upload JPG, JPEG, PNG, or GIF.', 'error');
-            redirect("profile");
+            redirect("admin/profile");
         }
         
         // Validate file size
         if ($file['size'] > $max_size) {
             set_flash_message('File is too large. Maximum size is 5MB.', 'error');
-            redirect("profile");
+            redirect("admin/profile");
         }
         
         // Generate unique filename
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_flash_message('Failed to upload file. Please check folder permissions.', 'error');
         }
         
-        redirect("profile");
+        redirect("admin/profile");
     } else {
         $error_msg = 'Please select a photo to upload.';
         if (isset($_FILES['profile_photo']['error'])) {
@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error_msg = $error_codes[$_FILES['profile_photo']['error']] ?? $error_msg;
         }
         set_flash_message($error_msg, 'error');
-        redirect("profile");
+        redirect("admin/profile");
     }
 }
     
@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($stmt->execute()) {
                 set_flash_message('Password changed successfully! 🔒', 'success');
-                redirect("profile");
+                redirect("admin/profile");
             } else {
                 $errors[] = "Failed to change password";
             }

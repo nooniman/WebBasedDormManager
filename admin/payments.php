@@ -11,7 +11,7 @@ $page_title = 'Payment Management';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         set_flash_message('Invalid request', 'error');
-        redirect('payments');
+        redirect('admin/payments');
     }
     
     if (isset($_POST['update_status'])) {
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 $stmt->close();
             }
-            redirect('payments');
+            redirect('admin/payments');
         }    // Handle manual payment recording
     if (isset($_POST['record_payment'])) {
         $tenant_id = (int)$_POST['tenant_id'];
@@ -51,7 +51,7 @@ $stmt->close();
             set_flash_message('Failed to record payment', 'error');
         }
         $stmt->close();
-        redirect('payments');
+        redirect('admin/payments');
     }
 }
 
