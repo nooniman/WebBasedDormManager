@@ -191,31 +191,31 @@ $recent_payments = $conn->query("
         </div>
         <div class="card-body-enhanced">
             <div class="quick-actions-grid">
-                <a href="bookings.php?status=pending" class="quick-action-card">
+                <a href="bookings?status=pending" class="quick-action-card">
                     <div class="icon">📋</div>
                     <div class="title">Review Bookings</div>
                     <div class="description"><?php echo $stats['pending_bookings']; ?> pending requests</div>
                 </a>
                 
-                <a href="rooms.php" class="quick-action-card">
+                <a href="rooms" class="quick-action-card">
                     <div class="icon">🏠</div>
                     <div class="title">Manage Rooms</div>
                     <div class="description"><?php echo $stats['total_rooms']; ?> total rooms</div>
                 </a>
                 
-                <a href="tenants.php" class="quick-action-card">
+                <a href="tenants" class="quick-action-card">
                     <div class="icon">👥</div>
                     <div class="title">View Tenants</div>
                     <div class="description"><?php echo $stats['total_tenants']; ?> registered</div>
                 </a>
                 
-                <a href="payments.php" class="quick-action-card">
+                <a href="payments" class="quick-action-card">
                     <div class="icon">💳</div>
                     <div class="title">Payments</div>
                     <div class="description">Track transactions</div>
                 </a>
 
-                <a href="payments.php?method=paypal" class="quick-action-card">
+                <a href="payments?method=paypal" class="quick-action-card">
                     <div class="icon">🅿️</div>
                     <div class="title">PayPal Payments</div>
                     <div class="description">
@@ -224,13 +224,13 @@ $recent_payments = $conn->query("
                     </div>
                 </a>
                 
-                <a href="reports.php" class="quick-action-card">
+                <a href="reports" class="quick-action-card">
                     <div class="icon">📊</div>
                     <div class="title">View Reports</div>
                     <div class="description">Analytics & insights</div>
                 </a>
                 
-                <a href="announcements.php" class="quick-action-card">
+                <a href="announcements" class="quick-action-card">
                     <div class="icon">📢</div>
                     <div class="title">Announcements</div>
                     <div class="description">Post updates</div>
@@ -247,7 +247,7 @@ $recent_payments = $conn->query("
                     <div class="header-icon">📋</div>
                     Recent Booking Requests
                 </h2>
-                <a href="bookings.php" class="btn-enhanced sm outline">View All</a>
+                <a href="bookings" class="btn-enhanced sm outline">View All</a>
             </div>
             <div class="card-body-enhanced">
                 <?php if ($recent_bookings && $recent_bookings->num_rows > 0): ?>
@@ -284,7 +284,7 @@ $recent_payments = $conn->query("
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="view_booking.php?id=<?php echo $booking['id']; ?>" 
+                                            <a href="view_booking?id=<?php echo $booking['id']; ?>" 
                                                class="btn-enhanced sm primary">
                                                 View
                                             </a>
@@ -311,7 +311,7 @@ $recent_payments = $conn->query("
                     <div class="header-icon">💳</div>
                     Recent Payments
                 </h2>
-                <a href="payments.php" class="btn-enhanced sm outline">View All</a>
+                <a href="payments" class="btn-enhanced sm outline">View All</a>
             </div>
             <div class="card-body-enhanced">
                 <?php if ($recent_payments && $recent_payments->num_rows > 0): ?>

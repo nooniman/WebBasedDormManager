@@ -9,7 +9,7 @@ $page_title = 'Room Details';
 $room_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($room_id === 0) {
-    redirect('rooms.php');
+    redirect('rooms');
 }
 
 // Fetch room details
@@ -20,7 +20,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     set_flash_message('Room not found', 'error');
-    redirect('rooms.php');
+    redirect('rooms');
 }
 
 $room = $result->fetch_assoc();
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         
         if ($update_stmt->execute()) {
             set_flash_message('Room updated successfully! 🎉', 'success');
-            redirect("room_details.php?id=$room_id");
+            redirect("room_details?id=$room_id");
         } else {
             set_flash_message('Failed to update room', 'error');
         }
@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
                 
                 $insert_photo->close();
-                redirect("room_details.php?id=$room_id");
+                redirect("room_details?id=$room_id");
             } else {
                 set_flash_message($upload_result['message'], 'error');
             }
@@ -131,7 +131,7 @@ if (isset($_GET['delete_photo']) && verify_csrf_token($_GET['csrf_token'])) {
     }
     $photo_stmt->close();
     
-    redirect("room_details.php?id=$room_id");
+    redirect("room_details?id=$room_id");
 }
 
 // Handle set primary photo
@@ -150,7 +150,7 @@ if (isset($_GET['set_primary']) && verify_csrf_token($_GET['csrf_token'])) {
     }
     $primary_stmt->close();
     
-    redirect("room_details.php?id=$room_id");
+    redirect("room_details?id=$room_id");
 }
 
 // Fetch room photos
@@ -798,9 +798,9 @@ require_once '../includes/header.php';
     <div class="container">
         <!-- Breadcrumb -->
         <nav class="breadcrumb-admin">
-            <a href="dashboard.php">Dashboard</a>
+            <a href="dashboard">Dashboard</a>
             <span>→</span>
-            <a href="rooms.php">Rooms</a>
+            <a href="rooms">Rooms</a>
             <span>→</span>
             <span>Room <?php echo htmlspecialchars($room['room_number']); ?></span>
         </nav>
@@ -820,13 +820,13 @@ require_once '../includes/header.php';
                     </div>
                     
                     <div class="header-actions">
-                        <a href="../public/room_view.php?id=<?php echo $room_id; ?>" 
+                        <a href="<?php echo PUBLIC_URL; ?>/room_view?id=<?php echo $room_id; ?>" 
                            class="header-btn primary"
                            target="_blank">
                             <span>👁️</span>
                             <span>Preview</span>
                         </a>
-                        <a href="rooms.php" class="header-btn secondary">
+                        <a href="rooms" class="header-btn secondary">
                             <span>←</span>
                             <span>Back to Rooms</span>
                         </a>
@@ -1060,7 +1060,7 @@ require_once '../includes/header.php';
                                 <span>💾</span>
                                 <span>Save Changes</span>
                             </button>
-                            <a href="rooms.php" class="btn-modern secondary">
+                            <a href="rooms" class="btn-modern secondary">
                                 <span>✕</span>
                                 <span>Cancel</span>
                             </a>

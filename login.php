@@ -7,9 +7,9 @@ require_once 'includes/auth0_functions.php';
 // Redirect if already logged in
 if (is_logged_in()) {
     if ($_SESSION['role'] === 'admin') {
-        redirect('admin/dashboard.php');
+        redirect('admin/dashboard');
     } else {
-        redirect('tenant/portal.php');
+        redirect('tenant/portal');
     }
 }
 
@@ -28,7 +28,7 @@ if (isset($_GET['auth0_login'])) {
     } catch (Exception $e) {
         error_log('Auth0 Login Error: ' . $e->getMessage());
         $_SESSION['error'] = 'Unable to connect to Auth0. Please try again.';
-        header('Location: login.php');
+        header('Location: ' . LOGIN_URL);
         exit();
     }
 }
@@ -69,9 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 
                 // Redirect based on role
                 if ($user['role'] === 'admin') {
-                    redirect('admin/dashboard.php');
+                    redirect('admin/dashboard');
                 } else {
-                    redirect('tenant/portal.php');
+                    redirect('tenant/portal');
                 }
             } else {
                 $error = 'Invalid email or password';

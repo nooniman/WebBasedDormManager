@@ -23,16 +23,16 @@ try {
         
         // Redirect based on role
         if ($user['role'] === 'admin') {
-            redirect('admin/dashboard.php');
+            redirect('admin/dashboard');
         } else {
-            redirect('tenant/portal.php');
+            redirect('tenant/portal');
         }
     } else {
         $_SESSION['error'] = 'Authentication failed';
-        redirect('login.php');
+        redirect('login');
     }
 } catch (Exception $e) {
     error_log('Auth0 Error: ' . $e->getMessage());
     $_SESSION['error'] = 'Authentication error occurred';
-    redirect('login.php');
+    redirect('login');
 }

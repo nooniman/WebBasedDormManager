@@ -117,7 +117,7 @@ $result = $conn->query($query);
                                 <span class="payment-badge paypal">🅿️ <?php echo $tenant['paypal_payments']; ?> PayPal</span>
                             <?php endif; ?>
                         </div>
-                        <a href="tenant_details.php?id=<?php echo $tenant['id']; ?>" class="btn-enhanced primary sm">
+                        <a href="tenant_details?id=<?php echo $tenant['id']; ?>" class="btn-enhanced primary sm">
                             View Details
                         </a>
                     </div>

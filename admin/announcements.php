@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         $stmt->close();
-        redirect('announcements.php');
+        redirect('announcements');
     }
 }
 

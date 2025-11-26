@@ -609,13 +609,13 @@ require_once '../includes/header.php';
                 <p class="subtitle">Visual overview of all bookings and schedules</p>
             </div>
             <div style="display: flex; gap: 0.5rem;">
-                <a href="bookings.php" class="btn-enhanced outline">
+                <a href="bookings" class="btn-enhanced outline">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;">
                         <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
                     </svg>
                     List View
                 </a>
-                <a href="dashboard.php" class="btn-enhanced outline">← Dashboard</a>
+                <a href="dashboard" class="btn-enhanced outline">← Dashboard</a>
             </div>
         </div>
     </div>
@@ -678,7 +678,7 @@ require_once '../includes/header.php';
             <div class="filter-actions">
                 <button type="submit" class="btn-enhanced primary" style="flex: 1;">Apply Filter</button>
                 <?php if ($room_filter): ?>
-                    <a href="calendar.php?month=<?php echo $month; ?>&year=<?php echo $year; ?>" 
+                    <a href="calendar?month=<?php echo $month; ?>&year=<?php echo $year; ?>" 
                        class="btn-enhanced outline" style="flex: 1;">Clear</a>
                 <?php endif; ?>
             </div>
@@ -844,7 +844,7 @@ require_once '../includes/header.php';
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="view_booking.php?id=<?php echo $booking['id']; ?>" 
+                                    <a href="view_booking?id=<?php echo $booking['id']; ?>" 
                                        class="btn-enhanced primary sm">
                                         View Details
                                     </a>

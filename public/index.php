@@ -597,11 +597,11 @@ require_once '../includes/header.php';
                 and a seamless booking process. Your ideal room is just a click away!
             </p>
             <div class="hero-buttons">
-                <a href="rooms.php" class="hero-btn primary">
+                <a href="rooms" class="hero-btn primary">
                     <span>Browse Available Rooms</span>
                     <span>→</span>
                 </a>
-                <a href="../login.php" class="hero-btn outline">
+                <a href="<?php echo LOGIN_URL; ?>" class="hero-btn outline">
                     <span>Login to Your Account</span>
                 </a>
             </div>
@@ -722,10 +722,10 @@ require_once '../includes/header.php';
                             </div>
                             
                             <div class="room-actions">
-                                <a href="room_view.php?id=<?php echo $room['id']; ?>" class="room-btn outline">
+                                <a href="room_view?id=<?php echo $room['id']; ?>" class="room-btn outline">
                                     View Details
                                 </a>
-                                <a href="rooms.php" class="room-btn primary">
+                                <a href="rooms" class="room-btn primary">
                                     Book Now
                                 </a>
                             </div>
@@ -735,7 +735,7 @@ require_once '../includes/header.php';
             </div>
             
             <div style="text-align: center; margin-top: 3rem;">
-                <a href="rooms.php" class="hero-btn primary" style="display: inline-flex;">
+                <a href="rooms" class="hero-btn primary" style="display: inline-flex;">
                     View All Rooms
                     <span>→</span>
                 </a>
@@ -754,10 +754,10 @@ require_once '../includes/header.php';
                     Start your journey today!
                 </p>
                 <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                    <a href="rooms.php" class="hero-btn primary">
+                    <a href="rooms" class="hero-btn primary">
                         Browse Available Rooms
                     </a>
-                    <a href="../register.php" class="hero-btn outline">
+                    <a href="<?php echo SITE_URL; ?>/register" class="hero-btn outline">
                         Create Account
                     </a>
                 </div>

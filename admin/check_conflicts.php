@@ -8,7 +8,7 @@ $page_title = 'Check Booking Conflicts';
 
 if (!isset($_GET['booking_id'])) {
     set_flash_message('Invalid booking ID', 'error');
-    redirect('bookings.php');
+    redirect('bookings');
 }
 
 $booking_id = intval($_GET['booking_id']);
@@ -29,7 +29,7 @@ $stmt->close();
 
 if (!$booking) {
     set_flash_message('Booking not found', 'error');
-    redirect('bookings.php');
+    redirect('bookings');
 }
 
 // Detect conflicts
@@ -172,7 +172,7 @@ require_once '../includes/header.php';
 <div class="container conflict-container">
     <div class="page-header">
         <h1>⚠️ Conflict Check: Booking #<?php echo $booking['id']; ?></h1>
-        <a href="view_booking.php?id=<?php echo $booking_id; ?>" class="btn btn-secondary">← Back</a>
+        <a href="view_booking?id=<?php echo $booking_id; ?>" class="btn btn-secondary">← Back</a>
     </div>
 
     <!-- Current Booking Summary -->
@@ -233,7 +233,7 @@ require_once '../includes/header.php';
                             <?php echo ucfirst($conflict['status']); ?>
                         </span>
                     </div>
-                    <a href="view_booking.php?id=<?php echo $conflict['id']; ?>" 
+                    <a href="view_booking?id=<?php echo $conflict['id']; ?>" 
                        class="btn btn-sm btn-secondary" target="_blank">
                         View Details
                     </a>
@@ -301,11 +301,11 @@ require_once '../includes/header.php';
                             class="btn btn-danger" style="flex: 1;">
                         ✗ Reject Booking
                     </button>
-                    <a href="edit_booking.php?id=<?php echo $booking_id; ?>" 
+                    <a href="edit_booking?id=<?php echo $booking_id; ?>" 
                        class="btn btn-warning" style="flex: 1;">
                         ✏️ Edit Dates
                     </a>
-                    <a href="bookings.php" class="btn btn-secondary" style="flex: 1;">
+                    <a href="bookings" class="btn btn-secondary" style="flex: 1;">
                         Cancel
                     </a>
                 </div>
@@ -323,7 +323,7 @@ require_once '../includes/header.php';
             </p>
 
             <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
-                <form method="POST" action="bookings.php" style="flex: 1;">
+                <form method="POST" action="bookings" style="flex: 1;">
                     <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     <input type="hidden" name="booking_id" value="<?php echo $booking_id; ?>">
                     <input type="hidden" name="action" value="approve">
@@ -331,7 +331,7 @@ require_once '../includes/header.php';
                         ✓ Approve Booking
                     </button>
                 </form>
-                <a href="view_booking.php?id=<?php echo $booking_id; ?>" 
+                <a href="view_booking?id=<?php echo $booking_id; ?>" 
                    class="btn btn-secondary" style="flex: 1;">
                     Back to Details
                 </a>
@@ -345,7 +345,7 @@ require_once '../includes/header.php';
     <div class="modal-content">
         <button class="modal-close" onclick="closeRejectModal()">×</button>
         <h3>Reject Booking</h3>
-        <form method="POST" action="bookings.php">
+        <form method="POST" action="bookings">
             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="action" value="reject">
             <input type="hidden" name="booking_id" value="<?php echo $booking_id; ?>">

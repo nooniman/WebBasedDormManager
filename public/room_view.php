@@ -633,9 +633,9 @@ require_once '../includes/header.php';
     <div class="container">
         <!-- Breadcrumb -->
         <nav class="breadcrumb">
-            <a href="index.php">Home</a>
+            <a href="<?php echo PUBLIC_URL; ?>">Home</a>
             <span>→</span>
-            <a href="rooms.php">Rooms</a>
+            <a href="rooms">Rooms</a>
             <span>→</span>
             <span>Room <?php echo htmlspecialchars($room['room_number']); ?></span>
         </nav>
@@ -789,12 +789,12 @@ require_once '../includes/header.php';
                     <div class="booking-actions">
                         <?php if ($room['status'] === 'available'): ?>
                             <?php if (isset($_SESSION['user_id'])): ?>
-                                <a href="booking.php?room_id=<?php echo $room['id']; ?>" class="booking-btn primary">
+                                <a href="booking?room_id=<?php echo $room['id']; ?>" class="booking-btn primary">
                                     <span>📝</span>
                                     <span>Book This Room</span>
                                 </a>
                             <?php else: ?>
-                                <a href="../login.php?redirect=booking.php?room_id=<?php echo $room['id']; ?>" class="booking-btn primary">
+                                <a href="<?php echo LOGIN_URL; ?>?redirect=booking?room_id=<?php echo $room['id']; ?>" class="booking-btn primary">
                                     <span>🔐</span>
                                     <span>Login to Book</span>
                                 </a>
@@ -806,7 +806,7 @@ require_once '../includes/header.php';
                             </div>
                         <?php endif; ?>
                         
-                        <a href="rooms.php" class="booking-btn secondary">
+                        <a href="rooms" class="booking-btn secondary">
                             <span>←</span>
                             <span>Back to Rooms</span>
                         </a>
@@ -842,7 +842,7 @@ require_once '../includes/header.php';
                                     </div>
                                     <div class="similar-room-price">₱<?php echo number_format($similar['price'], 0); ?></div>
                                 </div>
-                                <a href="room_view.php?id=<?php echo $similar['id']; ?>" class="similar-room-btn">
+                                <a href="room_view?id=<?php echo $similar['id']; ?>" class="similar-room-btn">
                                     View Details
                                 </a>
                             </div>

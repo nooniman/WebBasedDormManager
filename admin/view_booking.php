@@ -9,7 +9,7 @@ $page_title = 'Booking Details';
 // Get booking ID
 if (!isset($_GET['id'])) {
     set_flash_message('Invalid booking ID', 'error');
-    redirect('bookings.php');
+    redirect('bookings');
 }
 
 $booking_id = intval($_GET['id']);
@@ -34,7 +34,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     set_flash_message('Booking not found', 'error');
-    redirect('bookings.php');
+    redirect('bookings');
 }
 
 $booking = $result->fetch_assoc();
@@ -801,7 +801,7 @@ require_once '../includes/header.php';
                 <button onclick="window.print()" class="btn-enhanced outline">
                     🖨️ Print
                 </button>
-                <a href="bookings.php" class="btn-enhanced outline">
+                <a href="bookings" class="btn-enhanced outline">
                     ← Back to Bookings
                 </a>
             </div>
@@ -1132,7 +1132,7 @@ require_once '../includes/header.php';
                 
                 <div class="action-button-group">
                     <?php if ($booking['status'] === 'pending'): ?>
-                        <form method="POST" action="bookings.php" style="margin: 0;">
+                        <form method="POST" action="bookings" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                             <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">
                             <input type="hidden" name="action" value="approve">
@@ -1144,7 +1144,7 @@ require_once '../includes/header.php';
                             ✗ Reject Booking
                         </button>
                     <?php elseif ($booking['status'] === 'approved'): ?>
-                        <form method="POST" action="bookings.php" style="margin: 0;">
+                        <form method="POST" action="bookings" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                             <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">
                             <input type="hidden" name="action" value="checkin">
@@ -1153,7 +1153,7 @@ require_once '../includes/header.php';
                             </button>
                         </form>
                     <?php elseif ($booking['status'] === 'checked_in'): ?>
-                        <form method="POST" action="bookings.php" style="margin: 0;">
+                        <form method="POST" action="bookings" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                             <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">
                             <input type="hidden" name="action" value="checkout">
@@ -1163,12 +1163,12 @@ require_once '../includes/header.php';
                         </form>
                     <?php endif; ?>
                     
-                    <a href="edit_booking.php?id=<?php echo $booking['id']; ?>" 
+                    <a href="edit_booking?id=<?php echo $booking['id']; ?>" 
                        class="btn-enhanced outline action-button-full">
                         ✏️ Edit Booking
                     </a>
                     
-                    <a href="bookings.php" class="btn-enhanced outline action-button-full">
+                    <a href="bookings" class="btn-enhanced outline action-button-full">
                         ← Back to List
                     </a>
                 </div>
@@ -1190,7 +1190,7 @@ require_once '../includes/header.php';
             <button class="modal-close-btn" onclick="closeRejectModal()">×</button>
         </div>
         <div class="modal-body-enhanced">
-            <form method="POST" action="bookings.php">
+            <form method="POST" action="bookings">
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <input type="hidden" name="action" value="reject">
                 <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">

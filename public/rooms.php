@@ -765,7 +765,7 @@ require_once '../includes/header.php';
                             <button type="submit" class="filter-btn apply">
                                 Apply Filters
                             </button>
-                            <a href="rooms.php" class="filter-btn reset">
+                            <a href="rooms" class="filter-btn reset">
                                 Reset
                             </a>
                         </div>
@@ -911,17 +911,17 @@ require_once '../includes/header.php';
                                     <?php endif; ?>
                                     
                                     <div class="room-card-actions">
-                                        <a href="room_view.php?id=<?php echo $room['id']; ?>" 
+                                        <a href="room_view?id=<?php echo $room['id']; ?>" 
                                            class="room-action-btn view">
                                             View Details
                                         </a>
                                         <?php if (isset($_SESSION['user_id'])): ?>
-                                            <a href="booking.php?room_id=<?php echo $room['id']; ?>" 
+                                            <a href="booking?room_id=<?php echo $room['id']; ?>" 
                                                class="room-action-btn book">
                                                 Book Now
                                             </a>
                                         <?php else: ?>
-                                            <a href="../login.php?redirect=booking.php?room_id=<?php echo $room['id']; ?>" 
+                                            <a href="<?php echo LOGIN_URL; ?>?redirect=booking?room_id=<?php echo $room['id']; ?>" 
                                                class="room-action-btn book">
                                                 Login to Book
                                             </a>
@@ -936,7 +936,7 @@ require_once '../includes/header.php';
                         <div class="empty-icon">🔍</div>
                         <h3>No Rooms Found</h3>
                         <p>No rooms match your current filter criteria. Try adjusting your filters.</p>
-                        <a href="rooms.php" class="hero-btn primary" style="display: inline-flex;">
+                        <a href="rooms" class="hero-btn primary" style="display: inline-flex;">
                             View All Rooms
                         </a>
                     </div>

@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute()) {
                 $_SESSION['full_name'] = $first_name . ' ' . $last_name;
                 set_flash_message('Profile updated successfully! 🎉', 'success');
-                redirect("profile.php");
+                redirect("profile");
             } else {
                 $errors[] = "Failed to update profile";
             }
@@ -69,13 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validate file type
         if (!in_array($file_ext, $allowed_types)) {
             set_flash_message('Invalid file type. Please upload JPG, JPEG, PNG, or GIF.', 'error');
-            redirect("profile.php");
+            redirect("profile");
         }
         
         // Validate file size
         if ($file['size'] > $max_size) {
             set_flash_message('File is too large. Maximum size is 5MB.', 'error');
-            redirect("profile.php");
+            redirect("profile");
         }
         
         // Generate unique filename
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_flash_message('Failed to upload file. Please check folder permissions.', 'error');
         }
         
-        redirect("profile.php");
+        redirect("profile");
     } else {
         $error_msg = 'Please select a photo to upload.';
         if (isset($_FILES['profile_photo']['error'])) {
@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error_msg = $error_codes[$_FILES['profile_photo']['error']] ?? $error_msg;
         }
         set_flash_message($error_msg, 'error');
-        redirect("profile.php");
+        redirect("profile");
     }
 }
     
@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($stmt->execute()) {
                 set_flash_message('Password changed successfully! 🔒', 'success');
-                redirect("profile.php");
+                redirect("profile");
             } else {
                 $errors[] = "Failed to change password";
             }
@@ -898,7 +898,7 @@ require_once '../includes/header.php';
     <div class="container">
         <!-- Breadcrumb -->
         <nav class="breadcrumb-nav">
-            <a href="dashboard.php">Dashboard</a>
+            <a href="dashboard">Dashboard</a>
             <span>→</span>
             <span>My Profile</span>
         </nav>
@@ -1027,7 +1027,7 @@ require_once '../includes/header.php';
                             </div>
                             
                             <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e2e8f0;">
-                                <a href="dashboard.php" class="btn-admin secondary">Cancel</a>
+                                <a href="dashboard" class="btn-admin secondary">Cancel</a>
                                 <button type="submit" name="update_profile" class="btn-admin primary">
                                     <span>💾</span>
                                     <span>Save Changes</span>
@@ -1079,7 +1079,7 @@ require_once '../includes/header.php';
                             </div>
                             
                             <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e2e8f0;">
-                                <a href="dashboard.php" class="btn-admin secondary">Cancel</a>
+                                <a href="dashboard" class="btn-admin secondary">Cancel</a>
                                 <button type="submit" name="update_photo" class="btn-admin primary">
                                     <span>⬆️</span>
                                     <span>Upload Photo</span>
@@ -1130,7 +1130,7 @@ require_once '../includes/header.php';
                             </div>
                             
                             <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e2e8f0;">
-                                <a href="dashboard.php" class="btn-admin secondary">Cancel</a>
+                                <a href="dashboard" class="btn-admin secondary">Cancel</a>
                                 <button type="submit" name="change_password" class="btn-admin primary">
                                     <span>🔐</span>
                                     <span>Change Password</span>

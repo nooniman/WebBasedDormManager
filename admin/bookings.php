@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $stmt->close();
         }
         
-        redirect('bookings.php');
+        redirect('bookings');
     }
 }
 
@@ -696,8 +696,8 @@ require_once '../includes/header.php';
                 <p class="subtitle">Review and process booking requests</p>
             </div>
             <div style="display: flex; gap: 0.5rem;">
-                <a href="calendar.php" class="btn-enhanced info">📅 Calendar View</a>
-                <a href="dashboard.php" class="btn-enhanced outline">← Dashboard</a>
+                <a href="calendar" class="btn-enhanced info">📅 Calendar View</a>
+                <a href="dashboard" class="btn-enhanced outline">← Dashboard</a>
             </div>
         </div>
     </div>
@@ -763,7 +763,7 @@ require_once '../includes/header.php';
                     <button type="submit" class="btn-enhanced primary" style="flex: 1;">
                         🔍 Apply Filters
                     </button>
-                    <a href="bookings.php" class="btn-enhanced outline" style="flex: 1;">
+                    <a href="bookings" class="btn-enhanced outline" style="flex: 1;">
                         Clear
                     </a>
                 </div>
@@ -936,7 +936,7 @@ require_once '../includes/header.php';
                                 </button>
                             <?php endif; ?>
                             
-                            <a href="view_booking.php?id=<?php echo $booking['id']; ?>" 
+                            <a href="view_booking?id=<?php echo $booking['id']; ?>" 
                                class="btn-enhanced outline sm" 
                                style="grid-column: span 2;">
                                 👁️ View Full Details
@@ -975,7 +975,7 @@ require_once '../includes/header.php';
             <h3>No Bookings Found</h3>
             <p>No booking requests match your current filters.</p>
             <?php if ($status_filter || $search): ?>
-                <a href="bookings.php" class="btn-enhanced primary">Clear Filters</a>
+                <a href="bookings" class="btn-enhanced primary">Clear Filters</a>
             <?php endif; ?>
         </div>
     <?php endif; ?>

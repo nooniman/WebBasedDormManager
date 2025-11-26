@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 set_flash_message('Room added successfully! 🎉', 'success');
-                redirect('room_details.php?id=' . $new_room_id);
+                redirect('room_details?id=' . $new_room_id);
             } else {
                 $errors[] = "Failed to add room: " . $stmt->error;
             }
@@ -559,9 +559,9 @@ require_once '../includes/header.php';
     <div class="container">
         <!-- Breadcrumb -->
         <nav class="breadcrumb-nav">
-            <a href="dashboard.php">Dashboard</a>
+            <a href="dashboard">Dashboard</a>
             <span>→</span>
-            <a href="rooms.php">Rooms</a>
+            <a href="rooms">Rooms</a>
             <span>→</span>
             <span>Add New Room</span>
         </nav>
@@ -577,7 +577,7 @@ require_once '../includes/header.php';
                     <p class="header-subtitle">Create a new room for your dormitory</p>
                 </div>
                 <div class="header-actions">
-                    <a href="rooms.php" class="header-btn secondary">
+                    <a href="rooms" class="header-btn secondary">
                         <span>←</span>
                         <span>Back to Rooms</span>
                     </a>
@@ -778,7 +778,7 @@ require_once '../includes/header.php';
                                 <span>💾</span>
                                 <span>Add Room</span>
                             </button>
-                            <a href="rooms.php" class="btn-modern secondary">
+                            <a href="rooms" class="btn-modern secondary">
                                 <span>✕</span>
                                 <span>Cancel</span>
                             </a>

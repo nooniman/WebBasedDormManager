@@ -62,7 +62,7 @@ if (isset($_GET['delete']) && verify_csrf_token($_GET['csrf_token'])) {
         $stmt->close();
     }
     
-    redirect('rooms.php');
+    redirect('rooms');
 }
 
 // Handle room addition/update
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         $stmt->close();
-        redirect('rooms.php');
+        redirect('rooms');
     }
 }
 
@@ -934,7 +934,7 @@ require_once '../includes/header.php';
                 </div>
                 
                 <div class="page-actions">
-                    <a href="room_add.php" class="btn-add-room">
+                    <a href="room_add" class="btn-add-room">
                         <span style="font-size: 1.25rem;">➕</span>
                         <span>Add New Room</span>
                     </a>
@@ -1033,7 +1033,7 @@ require_once '../includes/header.php';
                 </div>
                 
                 <div class="filter-group">
-                    <a href="rooms.php" class="filter-btn reset">
+                    <a href="rooms" class="filter-btn reset">
                         Reset
                     </a>
                 </div>
@@ -1169,11 +1169,11 @@ require_once '../includes/header.php';
                             </div>
                             
                             <div class="room-actions">
-                                <a href="room_details.php?id=<?php echo $room['id']; ?>" class="room-action-btn edit">
+                                <a href="room_details?id=<?php echo $room['id']; ?>" class="room-action-btn edit">
                                     <span>✏️</span>
                                     <span>Edit</span>
                                 </a>
-                                <a href="../public/room_view.php?id=<?php echo $room['id']; ?>" 
+                                <a href="<?php echo PUBLIC_URL; ?>/room_view?id=<?php echo $room['id']; ?>" 
                                    class="room-action-btn view" 
                                    target="_blank">
                                     <span>👁️</span>
@@ -1195,7 +1195,7 @@ require_once '../includes/header.php';
                         No rooms have been added yet. Click "Add New Room" to get started.
                     <?php endif; ?>
                 </p>
-                <a href="room_add.php" class="btn-add-room" style="display: inline-flex; margin-top: 1rem;">
+                <a href="room_add" class="btn-add-room" style="display: inline-flex; margin-top: 1rem;">
                     <span style="font-size: 1.25rem;">➕</span>
                     <span>Add Your First Room</span>
                 </a>

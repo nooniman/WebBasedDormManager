@@ -11,7 +11,7 @@ $success = '';
 
 // Get room details
 if (!isset($_GET['room_id'])) {
-    redirect('rooms.php');
+    redirect('rooms');
 }
 
 $room_id = intval($_GET['room_id']);
@@ -28,7 +28,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     set_flash_message('Room not available', 'error');
-    redirect('rooms.php');
+    redirect('rooms');
 }
 
 $room = $result->fetch_assoc();
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $admin_stmt->close();
                     
                     set_flash_message('Booking request submitted successfully!', 'success');
-                    redirect('../tenant/bookings.php');
+                    redirect('../tenant/bookings');
                 } else {
                     $error = 'Failed to submit booking request';
                 }
@@ -595,11 +595,11 @@ require_once '../includes/header.php';
     <div class="container">
         <!-- Breadcrumb -->
         <nav class="breadcrumb">
-            <a href="index.php">Home</a>
+            <a href="<?php echo PUBLIC_URL; ?>">Home</a>
             <span>→</span>
-            <a href="rooms.php">Rooms</a>
+            <a href="rooms">Rooms</a>
             <span>→</span>
-            <a href="room_view.php?id=<?php echo $room_id; ?>">Room <?php echo htmlspecialchars($room['room_number']); ?></a>
+            <a href="room_view?id=<?php echo $room_id; ?>">Room <?php echo htmlspecialchars($room['room_number']); ?></a>
             <span>→</span>
             <span>Book Room</span>
         </nav>
@@ -712,7 +712,7 @@ require_once '../includes/header.php';
                             <span>✓</span>
                             <span>Submit Booking Request</span>
                         </button>
-                        <a href="room_view.php?id=<?php echo $room_id; ?>" class="btn-booking secondary">
+                        <a href="room_view?id=<?php echo $room_id; ?>" class="btn-booking secondary">
                             <span>←</span>
                             <span>Cancel</span>
                         </a>

@@ -9,7 +9,7 @@ $page_title = 'Edit Booking';
 // Get booking ID
 if (!isset($_GET['id'])) {
     set_flash_message('Invalid booking ID', 'error');
-    redirect('bookings.php');
+    redirect('bookings');
 }
 
 $booking_id = intval($_GET['id']);
@@ -28,7 +28,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     set_flash_message('Booking not found', 'error');
-    redirect('bookings.php');
+    redirect('bookings');
 }
 
 $booking = $result->fetch_assoc();
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($update_stmt->execute()) {
             set_flash_message('Booking updated successfully', 'success');
-            redirect('view_booking.php?id=' . $booking_id);
+            redirect('view_booking?id=' . $booking_id);
         } else {
             $error = 'Failed to update booking';
         }
@@ -130,7 +130,7 @@ require_once '../includes/header.php';
 <div class="container edit-container">
     <div class="page-header">
         <h1>✏️ Edit Booking</h1>
-        <a href="view_booking.php?id=<?php echo $booking_id; ?>" class="btn btn-secondary">← Back</a>
+        <a href="view_booking?id=<?php echo $booking_id; ?>" class="btn btn-secondary">← Back</a>
     </div>
 
     <?php if (isset($error)): ?>
@@ -203,7 +203,7 @@ require_once '../includes/header.php';
                 <button type="submit" class="btn btn-primary" style="flex: 1;">
                     💾 Save Changes
                 </button>
-                <a href="view_booking.php?id=<?php echo $booking_id; ?>" 
+                <a href="view_booking?id=<?php echo $booking_id; ?>" 
                    class="btn btn-secondary" style="flex: 1;">
                     Cancel
                 </a>
