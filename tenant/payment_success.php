@@ -271,8 +271,8 @@ require_once '../includes/header.php';
             </div>
             
             <div class="action-buttons">
-                <a href="payments.php" class="btn-action btn-primary">View Payments</a>
-                <a href="portal.php" class="btn-action btn-secondary">Back to Portal</a>
+                <a href="<?php echo TENANT_URL; ?>/payments" class="btn-action btn-primary">View Payments</a>
+                <a href="<?php echo TENANT_URL; ?>/portal" class="btn-action btn-secondary">Back to Portal</a>
             </div>
         </div>
     <?php else: ?>
@@ -281,8 +281,8 @@ require_once '../includes/header.php';
             <h1 class="error-title">Payment Failed</h1>
             <p class="error-message"><?php echo htmlspecialchars($error); ?></p>
             <div class="action-buttons">
-                <a href="payments.php" class="btn-action btn-primary">Try Again</a>
-                <a href="portal.php" class="btn-action btn-secondary">Back to Portal</a>
+                <a href="<?php echo TENANT_URL; ?>/payments" class="btn-action btn-primary">Try Again</a>
+                <a href="<?php echo TENANT_URL; ?>/portal" class="btn-action btn-secondary">Back to Portal</a>
             </div>
         </div>
     <?php endif; ?>

@@ -461,13 +461,13 @@ require_once '../includes/header.php';
                 <p class="subtitle">Track and manage all your room bookings</p>
             </div>
             <div style="display: flex; gap: 0.75rem;">
-                <a href="booking_calendar.php" class="btn-enhanced outline">
+                <a href="<?php echo TENANT_URL; ?>/booking_calendar" class="btn-enhanced outline">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 0.5rem;">
                         <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                     </svg>
                     Calendar View
                 </a>
-                <a href="../public/rooms.php" class="btn-enhanced primary">
+                <a href="<?php echo PUBLIC_URL; ?>/rooms" class="btn-enhanced primary">
                     + New Booking
                 </a>
             </div>
@@ -638,7 +638,7 @@ require_once '../includes/header.php';
                     </div>
                     
                     <div class="booking-actions-section">
-                        <a href="view_booking_details.php?id=<?php echo $booking['id']; ?>" 
+                        <a href="<?php echo TENANT_URL; ?>/view_booking_details?id=<?php echo $booking['id']; ?>" 
                            class="btn-enhanced primary sm" style="white-space: nowrap;">
                             View Details
                         </a>
@@ -666,7 +666,7 @@ require_once '../includes/header.php';
                     You haven't made any bookings yet. Browse available rooms to get started!
                 <?php endif; ?>
             </p>
-            <a href="../public/rooms.php" class="btn-enhanced primary">
+            <a href="<?php echo PUBLIC_URL; ?>/rooms" class="btn-enhanced primary">
                 Browse Available Rooms
             </a>
         </div>
@@ -678,7 +678,7 @@ require_once '../includes/header.php';
     <div class="cancel-modal-content">
         <h3>Cancel Booking</h3>
         <p>Are you sure you want to cancel this booking? This action cannot be undone.</p>
-        <form id="cancelForm" method="POST" action="cancel_booking.php">
+        <form id="cancelForm" method="POST" action="<?php echo TENANT_URL; ?>/cancel_booking">
             <input type="hidden" name="booking_id" id="cancelBookingId">
             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <div class="cancel-modal-actions">

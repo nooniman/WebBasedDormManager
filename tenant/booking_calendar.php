@@ -669,7 +669,7 @@ require_once '../includes/header.php';
                     <div class="upcoming-list">
                         <?php while ($upcoming = $upcoming_result->fetch_assoc()): ?>
                             <div class="upcoming-item <?php echo $upcoming['status']; ?>"
-                                 onclick="window.location='view_booking_details.php?id=<?php echo $upcoming['id']; ?>'">
+                                 onclick="window.location='<?php echo TENANT_URL; ?>/view_booking_details?id=<?php echo $upcoming['id']; ?>'">
                                 <div class="upcoming-date">
                                     <?php echo date('M d, Y', strtotime($upcoming['start_date'])); ?>
                                 </div>
@@ -699,13 +699,13 @@ require_once '../includes/header.php';
             <div class="sidebar-card">
                 <h3>⚡ Quick Actions</h3>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <a href="bookings.php" class="btn-enhanced outline">
+                    <a href="<?php echo TENANT_URL; ?>/bookings" class="btn-enhanced outline">
                         View All Bookings
                     </a>
-                    <a href="../public/rooms.php" class="btn-enhanced primary">
+                    <a href="<?php echo PUBLIC_URL; ?>/rooms" class="btn-enhanced primary">
                         Browse Rooms
                     </a>
-                    <a href="portal.php" class="btn-enhanced outline">
+                    <a href="<?php echo TENANT_URL; ?>/portal" class="btn-enhanced outline">
                         Back to Portal
                     </a>
                 </div>
@@ -718,7 +718,7 @@ require_once '../includes/header.php';
 function viewDay(date) {
     // You can implement a modal or redirect to show bookings for that day
     // For now, redirect to bookings page
-    window.location = 'bookings.php';
+    window.location = '<?php echo TENANT_URL; ?>/bookings';
 }
 
 // Add keyboard navigation

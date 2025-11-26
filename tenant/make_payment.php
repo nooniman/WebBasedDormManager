@@ -28,7 +28,7 @@ $all_bookings_stmt->close();
 // If no bookings at all
 if (empty($all_bookings)) {
     set_flash_message('No active bookings found. Please book a room first.', 'error');
-    redirect('portal.php');
+    redirect('tenant/portal');
 }
 
 // Get booking ID from URL or use first booking
@@ -621,7 +621,7 @@ require_once '../includes/header.php';
 </style>
 
 <div class="container payment-page">
-    <a href="payments.php" class="back-link">← Back to Payments</a>
+    <a href="<?php echo TENANT_URL; ?>/payments" class="back-link">← Back to Payments</a>
     
     <div class="payment-container">
         

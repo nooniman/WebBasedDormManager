@@ -645,11 +645,11 @@ $stmt->close();
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
-                    <a href="view_booking_details.php?id=<?php echo $current_booking['id']; ?>" 
+                    <a href="<?php echo TENANT_URL; ?>/view_booking_details?id=<?php echo $current_booking['id']; ?>" 
                        class="btn-enhanced primary">
                         View Details
                     </a>
-                    <a href="../public/room_view.php?id=<?php echo $current_booking['room_id']; ?>" 
+                    <a href="<?php echo PUBLIC_URL; ?>/room_view?id=<?php echo $current_booking['room_id']; ?>" 
                        class="btn-enhanced outline">
                         Room Info
                     </a>
@@ -659,7 +659,7 @@ $stmt->close();
                     <div class="empty-icon">🏠</div>
                     <h3>No Active Booking</h3>
                     <p>You don't have an active booking at the moment.</p>
-                    <a href="../public/rooms.php" class="btn-enhanced primary">
+                    <a href="<?php echo PUBLIC_URL; ?>/rooms" class="btn-enhanced primary">
                         Browse Available Rooms
                     </a>
                 </div>
@@ -686,7 +686,7 @@ $stmt->close();
                                 Requested on <?php echo date('M d, Y', strtotime($pending['created_at'])); ?>
                             </p>
                             <div style="display: flex; gap: 0.5rem;">
-                                <a href="view_booking_details.php?id=<?php echo $pending['id']; ?>" 
+                                <a href="<?php echo TENANT_URL; ?>/view_booking_details?id=<?php echo $pending['id']; ?>" 
                                    class="btn-enhanced outline sm" style="flex: 1;">
                                     View Details
                                 </a>
@@ -694,7 +694,7 @@ $stmt->close();
                         </div>
                     <?php endwhile; ?>
                 </div>
-                <a href="bookings.php" class="btn-enhanced outline" style="width: 100%; margin-top: 1rem;">
+                <a href="<?php echo TENANT_URL; ?>/bookings" class="btn-enhanced outline" style="width: 100%; margin-top: 1rem;">
                     View All Bookings
                 </a>
             <?php else: ?>
@@ -702,7 +702,7 @@ $stmt->close();
                     <div class="empty-icon">📋</div>
                     <h3>No Pending Requests</h3>
                     <p>You don't have any pending booking requests.</p>
-                    <a href="../public/rooms.php" class="btn-enhanced outline">
+                    <a href="<?php echo PUBLIC_URL; ?>/rooms" class="btn-enhanced outline">
                         Browse Rooms
                     </a>
                 </div>
@@ -720,7 +720,7 @@ $stmt->close();
                         Track your payment history
                     </p>
                 </div>
-                <a href="payments.php" class="btn-enhanced outline sm">View All</a>
+                <a href="<?php echo TENANT_URL; ?>/payments" class="btn-enhanced outline sm">View All</a>
             </div>
         </div>
         <div class="card-body-modern">
@@ -766,23 +766,23 @@ $stmt->close();
         </div>
         <div class="card-body-modern">
             <div class="quick-actions-grid">
-                <a href="../public/rooms.php" class="quick-action-btn">
+                <a href="<?php echo PUBLIC_URL; ?>/rooms" class="quick-action-btn">
                     <span class="quick-action-icon">🏠</span>
                     <span>Browse Rooms</span>
                 </a>
-                <a href="bookings.php" class="quick-action-btn">
+                <a href="<?php echo TENANT_URL; ?>/bookings" class="quick-action-btn">
                     <span class="quick-action-icon">📋</span>
                     <span>My Bookings</span>
                 </a>
-                <a href="booking_calendar.php" class="quick-action-btn">
+                <a href="<?php echo TENANT_URL; ?>/booking_calendar" class="quick-action-btn">
                     <span class="quick-action-icon">📅</span>
                     <span>Calendar View</span>
                 </a>
-                <a href="profile.php" class="quick-action-btn">
+                <a href="<?php echo TENANT_URL; ?>/profile" class="quick-action-btn">
                     <span class="quick-action-icon">👤</span>
                     <span>Update Profile</span>
                 </a>
-                <a href="payments.php" class="quick-action-btn">
+                <a href="<?php echo TENANT_URL; ?>/payments" class="quick-action-btn">
                     <span class="quick-action-icon">💳</span>
                     <span>View Payments</span>
                 </a>

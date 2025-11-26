@@ -90,11 +90,11 @@ require_once '../includes/header.php';
         
         <div class="action-buttons">
             <?php if ($booking_id): ?>
-                <a href="make_payment.php?booking_id=<?php echo $booking_id; ?>" class="btn-action btn-primary">
+                <a href="<?php echo TENANT_URL; ?>/make_payment?booking_id=<?php echo $booking_id; ?>" class="btn-action btn-primary">
                     Try Again
                 </a>
             <?php endif; ?>
-            <a href="portal.php" class="btn-action btn-secondary">Back to Portal</a>
+            <a href="<?php echo TENANT_URL; ?>/portal" class="btn-action btn-secondary">Back to Portal</a>
         </div>
     </div>
 </div>

@@ -666,7 +666,7 @@ require_once '../includes/header.php';
                 <p class="subtitle">Track all your payment transactions</p>
             </div>
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                <a href="portal.php" class="btn-enhanced outline">
+                <a href="<?php echo TENANT_URL; ?>/portal" class="btn-enhanced outline">
                     ← Back to Portal
                 </a>
                 <button onclick="window.print()" class="export-btn">
@@ -698,7 +698,7 @@ require_once '../includes/header.php';
                     <div class="booking-price">
                         <?php echo format_currency($booking['price']); ?> / month
                     </div>
-                    <a href="make_payment.php?booking_id=<?php echo $booking['id']; ?>" class="booking-pay-btn paypal">
+                    <a href="<?php echo TENANT_URL; ?>/make_payment?booking_id=<?php echo $booking['id']; ?>" class="booking-pay-btn paypal">
                         🅿️ Pay with PayPal
                     </a>
                 </div>
@@ -820,7 +820,7 @@ require_once '../includes/header.php';
                 
                 <?php if ($status_filter !== 'all' || $year_filter != date('Y') || $room_filter > 0): ?>
                 <div class="filter-group">
-                    <a href="payments.php" class="btn-enhanced outline" style="width: 100%; display: block; text-align: center;">
+                    <a href="<?php echo TENANT_URL; ?>/payments" class="btn-enhanced outline" style="width: 100%; display: block; text-align: center;">
                         ✕ Clear
                     </a>
                 </div>
@@ -920,17 +920,17 @@ require_once '../includes/header.php';
                     
                     <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                         <?php if ($status_filter !== 'all' || $year_filter != date('Y') || $room_filter > 0): ?>
-                            <a href="payments.php" class="btn-enhanced primary">
+                            <a href="<?php echo TENANT_URL; ?>/payments" class="btn-enhanced primary">
                                 Clear Filters
                             </a>
                         <?php endif; ?>
                         
                         <?php if (!empty($active_bookings)): ?>
-                            <a href="make_payment.php?booking_id=<?php echo $active_bookings[0]['id']; ?>" class="btn-enhanced primary" style="background: linear-gradient(135deg, #0070ba 0%, #003087 100%);">
+                            <a href="<?php echo TENANT_URL; ?>/make_payment?booking_id=<?php echo $active_bookings[0]['id']; ?>" class="btn-enhanced primary" style="background: linear-gradient(135deg, #0070ba 0%, #003087 100%);">
                                 🅿️ Make Payment via PayPal
                             </a>
                         <?php else: ?>
-                            <a href="../public/rooms.php" class="btn-enhanced primary">
+                            <a href="<?php echo PUBLIC_URL; ?>/rooms" class="btn-enhanced primary">
                                 Browse Available Rooms
                             </a>
                         <?php endif; ?>

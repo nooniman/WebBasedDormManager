@@ -26,8 +26,7 @@ $booking = $result->fetch_assoc();
 $stmt->close();
 
 if (!$booking) {
-    header("Location: bookings.php");
-    exit();
+    redirect("tenant/bookings");
 }
 
 $page_title = 'Booking Details - Room ' . $booking['room_number'];
@@ -596,7 +595,7 @@ require_once '../includes/header.php';
 <div class="container booking-details-page">
     <!-- Back Button -->
     <div style="margin-bottom: 1rem;">
-        <a href="bookings.php" class="btn-enhanced outline sm">
+        <a href="<?php echo TENANT_URL; ?>/bookings" class="btn-enhanced outline sm">
             ← Back to Bookings
         </a>
     </div>
@@ -986,21 +985,21 @@ require_once '../includes/header.php';
             <div class="action-card">
                 <h3>Quick Actions</h3>
                 <div class="action-buttons">
-                    <a href="../public/room_view.php?id=<?php echo $booking['room_id']; ?>" 
+                    <a href="<?php echo PUBLIC_URL; ?>/room_view?id=<?php echo $booking['room_id']; ?>" 
                        class="btn-enhanced outline">
                         View Room Details
                     </a>
-                    <a href="bookings.php" class="btn-enhanced outline">
+                    <a href="<?php echo TENANT_URL; ?>/bookings" class="btn-enhanced outline">
                         All Bookings
                     </a>
-                    <a href="payments.php" class="btn-enhanced outline">
+                    <a href="<?php echo TENANT_URL; ?>/payments" class="btn-enhanced outline">
                         Payment History
                     </a>
                     <button onclick="window.print()" class="btn-enhanced outline">
                         Print Details
                     </button>
                     <?php if ($booking['status'] === 'pending' || $booking['status'] === 'approved'): ?>
-                    <a href="cancel_booking.php?id=<?php echo $booking['id']; ?>" 
+                    <a href="<?php echo TENANT_URL; ?>/cancel_booking?id=<?php echo $booking['id']; ?>" 
                        class="btn-enhanced danger"
                        onclick="return confirm('Are you sure you want to cancel this booking?')">
                         Cancel Booking
