@@ -4,6 +4,24 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/../config/database.php';
+
+// Get user profile picture if logged in
+$user_profile_pic = null;
+$has_user_pic = false;
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $pic_query = $conn->prepare("SELECT profile_picture FROM users WHERE id = ?");
+    $pic_query->bind_param("i", $user_id);
+    $pic_query->execute();
+    $pic_result = $pic_query->get_result();
+    if ($pic_row = $pic_result->fetch_assoc()) {
+        $user_profile_pic = $pic_row['profile_picture'];
+        $pic_path = __DIR__ . '/../uploads/' . $user_profile_pic;
+        $has_user_pic = $user_profile_pic && file_exists($pic_path);
+    }
+    $pic_query->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -207,33 +225,90 @@ require_once __DIR__ . '/functions.php';
             display: none;
         }
         
-        /* User Profile Button */
+        /* User Profile Button - Enhanced with Profile Picture */
         .user-profile-btn {
-            padding: 0.65rem 1.1rem !important;
+            padding: 0.5rem 1rem 0.5rem 0.5rem !important;
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
             border: 1.5px solid #e2e8f0 !important;
             color: #1e293b !important;
             font-weight: 600 !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+            border-radius: 50px !important;
         }
         
         .user-profile-btn:hover {
-            border-color: #cbd5e0 !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+            border-color: #667eea !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2) !important;
+            transform: translateY(-2px) !important;
         }
         
+        .user-profile-btn::before {
+            display: none !important;
+        }
+        
+        /* User Avatar - Now supports images */
         .user-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 700;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 2px solid white;
+        }
+        
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .user-avatar-initial {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1e293b;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* Admin avatar special style */
+        .user-avatar.admin-avatar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-color: #f59e0b;
+        }
+        
+        /* Status indicator */
+        .user-status {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+        }
+        
+        .avatar-wrapper {
+            position: relative;
         }
         
         /* Logout Button Special Style */
@@ -445,6 +520,10 @@ require_once __DIR__ . '/functions.php';
                 align-items: center;
                 justify-content: center;
             }
+            
+            .user-profile-btn {
+                border-radius: 12px !important;
+            }
         }
         
         @media (max-width: 768px) {
@@ -468,6 +547,15 @@ require_once __DIR__ . '/functions.php';
             
             .flash-message .container {
                 padding: 0 1rem;
+            }
+            
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .user-name {
+                max-width: 100px;
             }
         }
         
@@ -537,10 +625,17 @@ require_once __DIR__ . '/functions.php';
                     </a></li>
                     <li>
                         <a href="/dormitory-management-system/admin/profile.php" class="user-profile-btn">
-                            <div class="user-avatar">
-                                <?php echo strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)); ?>
+                            <div class="avatar-wrapper">
+                                <div class="user-avatar admin-avatar">
+                                    <?php if ($has_user_pic): ?>
+                                        <img src="/dormitory-management-system/uploads/<?php echo htmlspecialchars($user_profile_pic); ?>?v=<?php echo time(); ?>" alt="Profile">
+                                    <?php else: ?>
+                                        <span class="user-avatar-initial"><?php echo strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="user-status"></span>
                             </div>
-                            <span><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Admin'); ?></span>
+                            <span class="user-name"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Admin'); ?></span>
                         </a>
                     </li>
                     <li><a href="/dormitory-management-system/logout.php" class="logout-btn">
@@ -548,28 +643,35 @@ require_once __DIR__ . '/functions.php';
                         Logout
                     </a></li>
                 <?php elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'tenant'): ?>
-                    <li><a href="/dormitory-management-system/tenant/portal.php">
+                    <li><a href="/dormitory-management-system/tenant/portal.php" <?php echo basename($_SERVER['PHP_SELF']) === 'portal.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                         Portal
                     </a></li>
-                    <li><a href="/dormitory-management-system/tenant/profile.php">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                        Profile
-                    </a></li>
-                    <li><a href="/dormitory-management-system/public/rooms.php">
+                    <li><a href="/dormitory-management-system/public/rooms.php" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                         Browse Rooms
                     </a></li>
-                    <li><a href="/dormitory-management-system/tenant/bookings.php">
+                    <li><a href="/dormitory-management-system/tenant/bookings.php" <?php echo basename($_SERVER['PHP_SELF']) === 'bookings.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
                         My Bookings
                     </a></li>
+                    <li><a href="/dormitory-management-system/tenant/payments.php" <?php echo basename($_SERVER['PHP_SELF']) === 'payments.php' ? 'class="active"' : ''; ?>>
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                        Payments
+                    </a></li>
                     <li>
                         <a href="/dormitory-management-system/tenant/profile.php" class="user-profile-btn">
-                            <div class="user-avatar">
-                                <?php echo strtoupper(substr($_SESSION['full_name'] ?? 'T', 0, 1)); ?>
+                            <div class="avatar-wrapper">
+                                <div class="user-avatar">
+                                    <?php if ($has_user_pic): ?>
+                                        <img src="/dormitory-management-system/uploads/<?php echo htmlspecialchars($user_profile_pic); ?>?v=<?php echo time(); ?>" alt="Profile">
+                                    <?php else: ?>
+                                        <span class="user-avatar-initial"><?php echo strtoupper(substr($_SESSION['full_name'] ?? 'T', 0, 1)); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="user-status"></span>
                             </div>
-                            <span><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Tenant'); ?></span>
+                            <span class="user-name"><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Tenant'); ?></span>
                         </a>
                     </li>
                     <li><a href="/dormitory-management-system/logout.php" class="logout-btn">
@@ -577,15 +679,15 @@ require_once __DIR__ . '/functions.php';
                         Logout
                     </a></li>
                 <?php else: ?>
-                    <li><a href="/dormitory-management-system/">
+                    <li><a href="/dormitory-management-system/" <?php echo basename($_SERVER['PHP_SELF']) === 'index.php' && strpos($_SERVER['PHP_SELF'], 'public') !== false ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                         Home
                     </a></li>
-                    <li><a href="/dormitory-management-system/public/rooms.php">
+                    <li><a href="/dormitory-management-system/public/rooms.php" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                         Rooms
                     </a></li>
-                    <li><a href="/dormitory-management-system/login.php">
+                    <li><a href="/dormitory-management-system/login.php" <?php echo basename($_SERVER['PHP_SELF']) === 'login.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
                         Login
                     </a></li>

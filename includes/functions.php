@@ -94,17 +94,44 @@ function format_currency($amount) {
 /**
  * Upload file with validation
  */
-function upload_file($file, $allowed_types = ['jpg', 'jpeg', 'png', 'pdf'], $max_size = 5242880) {
+function upload_file($file, $allowed_types = ['jpg', 'jpeg', 'png', 'pdf'], $max_size = 5242880, $subfolder = '') {
     $upload_dir = __DIR__ . '/../uploads/';
+    
+    // Add subfolder if specified
+    if (!empty($subfolder)) {
+        $upload_dir .= rtrim($subfolder, '/') . '/';
+    }
+    
+    // Create directory if it doesn't exist
+    if (!is_dir($upload_dir)) {
+        if (!mkdir($upload_dir, 0755, true)) {
+            return ['success' => false, 'message' => 'Failed to create upload directory'];
+        }
+    }
+    
+    // Check if directory is writable
+    if (!is_writable($upload_dir)) {
+        return ['success' => false, 'message' => 'Upload directory is not writable'];
+    }
     
     // Check if file was uploaded
     if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
-        return ['success' => false, 'message' => 'File upload failed'];
+        $error_messages = [
+            UPLOAD_ERR_INI_SIZE => 'File exceeds server upload limit',
+            UPLOAD_ERR_FORM_SIZE => 'File exceeds form upload limit',
+            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+            UPLOAD_ERR_EXTENSION => 'Upload stopped by extension',
+        ];
+        $error_code = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+        return ['success' => false, 'message' => $error_messages[$error_code] ?? 'File upload failed'];
     }
     
     // Check file size
     if ($file['size'] > $max_size) {
-        return ['success' => false, 'message' => 'File size exceeds limit'];
+        return ['success' => false, 'message' => 'File size exceeds limit (' . round($max_size / 1048576, 1) . 'MB)'];
     }
     
     // Get file extension
@@ -112,16 +139,18 @@ function upload_file($file, $allowed_types = ['jpg', 'jpeg', 'png', 'pdf'], $max
     
     // Check file type
     if (!in_array($file_ext, $allowed_types)) {
-        return ['success' => false, 'message' => 'Invalid file type'];
+        return ['success' => false, 'message' => 'Invalid file type. Allowed: ' . implode(', ', $allowed_types)];
     }
     
     // Generate unique filename
-    $new_filename = uniqid() . '_' . time() . '.' . $file_ext;
+    $new_filename = uniqid('profile_', true) . '_' . time() . '.' . $file_ext;
     $destination = $upload_dir . $new_filename;
     
     // Move uploaded file
     if (move_uploaded_file($file['tmp_name'], $destination)) {
-        return ['success' => true, 'filename' => $new_filename];
+        // Return path relative to uploads folder
+        $relative_path = (!empty($subfolder) ? rtrim($subfolder, '/') . '/' : '') . $new_filename;
+        return ['success' => true, 'filename' => $new_filename, 'path' => $relative_path];
     }
     
     return ['success' => false, 'message' => 'Failed to save file'];

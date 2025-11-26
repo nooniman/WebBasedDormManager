@@ -1,29 +1,35 @@
 # Dormitory Management System
 
-A comprehensive web-based dormitory management system built with PHP, MySQL, JavaScript, HTML, and CSS with Auth0 SSO integration and modern UI/UX design.
+A comprehensive web-based dormitory management system built with PHP, MySQL, JavaScript, HTML, and CSS with Auth0 SSO integration, PayPal payment processing, and modern UI/UX design.
 
 ## Features
 
 ### For Administrators
-- **Modern Dashboard**: Enhanced statistics dashboard with animated cards and charts
-- **Tenant Management**: Comprehensive tenant account management with profile cards
-- **Room Management**: Advanced room inventory with photo galleries and amenities
+- **Modern Dashboard**: Enhanced statistics dashboard with animated cards, charts, and PayPal revenue tracking
+- **Tenant Management**: Comprehensive tenant account management with profile cards and payment summaries
+- **Room Management**: Advanced room inventory with photo galleries, amenities, and room creation wizard
 - **Booking Management**: Visual booking calendar with status tracking and conflict detection
-- **Payment Tracking**: Detailed payment monitoring with transaction history
+- **Payment Tracking**: Detailed payment monitoring with PayPal transaction history and capture IDs
+- **PayPal Analytics**: Track PayPal vs cash payments, view transaction details, and monitor payment trends
 - **Announcements**: Create and publish system-wide announcements
-- **Reports**: Professional reports with charts, PDF exports, and analytics
+- **Reports**: Professional reports with tabbed interface, CSV exports, payment analytics, and Chart.js visualizations
 - **Calendar View**: Interactive booking calendar with month navigation
+- **Profile Management**: Admin profile settings and account management
 
 ### For Tenants
 - **Room Browsing**: Advanced filtering (type, category, floor, price, amenities)
 - **Room Gallery**: Stunning photo galleries with lightbox viewer
 - **Online Booking**: Streamlined booking request submission
 - **Personal Portal**: Enhanced dashboard with statistics and payment summary
-- **Payment History**: Complete transaction records with visual indicators
+- **PayPal Payments**: Secure online payments via PayPal with sandbox/production modes
+- **Multi-Room Payments**: Pay for multiple bookings if tenant has more than one room
+- **Flexible Payment Duration**: Choose payment duration from 1-12 months
+- **Payment History**: Complete transaction records with PayPal transaction IDs and status tracking
 - **Profile Management**: Update personal information and profile picture
 - **Announcements**: Stay updated with important notices
 - **SSO Login**: Secure login via Auth0 with social providers
 - **Booking Calendar**: Track your bookings with visual calendar
+- **Booking Details**: View comprehensive booking information with payment history
 
 ### Public Features
 - **Modern Homepage**: Welcoming landing page with feature highlights
@@ -35,13 +41,15 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 
 ## Technology Stack
 
-- **Backend**: PHP 7.4+
+- **Backend**: PHP 7.4+ / 8.x
 - **Database**: MySQL 5.7+
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Authentication**: Auth0 (OAuth 2.0 / OpenID Connect)
-- **Server**: Apache (XAMPP)
+- **Payments**: PayPal Checkout SDK 1.0 (Sandbox & Production)
+- **Server**: Apache (XAMPP / Hostinger)
 - **Image Storage**: File-based upload system
 - **HTTP Client**: Guzzle 7.0+
+- **Charts**: Chart.js 4.4.0
 - **Design**: Modern gradient-based UI with glassmorphism effects
 
 ## Installation
@@ -81,13 +89,18 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
    - Update with your Auth0 credentials
    - Set callback URL in Auth0 dashboard
 
-6. **Set Permissions**
+6. **Configure PayPal**
+   - Copy `config/paypal_config.php.example` to `config/paypal_config.php`
+   - Update with your PayPal API credentials (Client ID & Secret)
+   - Set `PAYPAL_MODE` to 'sandbox' for testing or 'live' for production
+
+7. **Set Permissions**
    - Ensure the `uploads/` directory is writable:
      ```bash
      chmod 755 uploads/
      ```
 
-7. **Access the Application**
+8. **Access the Application**
    - Open your browser and navigate to:
      ```
      http://localhost/dormitory-management-system/
@@ -109,60 +122,80 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 
 ```
 dormitory-management-system/
-├── admin/                  # Admin panel pages
-│   ├── dashboard.php       # Enhanced dashboard with animated statistics
-│   ├── tenants.php         # Modern tenant management with profile cards
-│   ├── rooms.php           # Advanced room inventory management
-│   ├── room_details.php    # Room details with photo gallery
-│   ├── payments.php        # Payment tracking with transaction history
-│   ├── bookings.php        # Booking management with modern card view
-│   ├── view_booking.php    # ✨ Detailed booking view with timeline
-│   ├── calendar.php        # ✨ Interactive booking calendar
-│   ├── announcements.php   # Announcement management
-│   └── reports.php         # ✨ Professional reports with charts
-├── assets/                 # Static assets
+├── admin/                      # Admin panel pages
+│   ├── dashboard.php           # Enhanced dashboard with PayPal stats
+│   ├── tenants.php             # Tenant management with payment summaries
+│   ├── rooms.php               # Room inventory management
+│   ├── room_add.php            # ✨ Room creation wizard
+│   ├── room_details.php        # Room details with photo gallery
+│   ├── payments.php            # Payment tracking with PayPal transactions
+│   ├── bookings.php            # Booking management with card view
+│   ├── view_booking.php        # Detailed booking view with PayPal info
+│   ├── edit_booking.php        # Booking edit functionality
+│   ├── check_conflicts.php     # ✨ AJAX conflict detection endpoint
+│   ├── calendar.php            # Interactive booking calendar
+│   ├── announcements.php       # Announcement management
+│   ├── reports.php             # ✨ Reports with CSV exports & Chart.js
+│   └── profile.php             # ✨ Admin profile management
+├── assets/                     # Static assets
 │   ├── css/
-│   │   └── style.css       # ✨ Modern responsive styles with gradients
+│   │   ├── style.css           # Modern responsive styles
+│   │   └── calendar.css        # Calendar-specific styles
 │   ├── js/
-│   │   └── main.js         # Enhanced interactive features
+│   │   ├── main.js             # Interactive features
+│   │   └── calendar.js         # Calendar functionality
 │   └── images/
-├── config/                 # Configuration files
-│   ├── database.php        # Database configuration (excluded from git)
-│   └── auth0_config.php    # Auth0 SSO configuration (excluded from git)
-├── includes/               # Reusable components
-│   ├── header.php          # ✨ Modern glassmorphism header with SVG icons
-│   ├── footer.php          # Enhanced footer
-│   ├── functions.php       # Utility functions
-│   ├── auth0_functions.php # Auth0 helper functions
-│   ├── booking_functions.php # ✨ Booking helper functions
-│   ├── admin_auth.php      # Admin authentication guard
-│   └── tenant_auth.php     # Tenant authentication guard
-├── public/                 # Public pages
-│   ├── index.php           # Homepage
-│   ├── rooms.php           # Enhanced room browsing with filters
-│   ├── room_view.php       # Detailed room view with gallery
-│   └── booking.php         # Room booking form
-├── tenant/                 # Tenant portal
-│   ├── portal.php          # Enhanced tenant dashboard
-│   ├── profile.php         # Profile management
-│   ├── bookings.php        # ✨ Tenant booking management
-│   ├── booking_calendar.php # ✨ Tenant booking calendar
-│   └── payments.php        # Payment history view
-├── uploads/                # User uploads (excluded from git)
-├── vendor/                 # Composer dependencies (excluded from git)
-├── callback.php            # Auth0 callback handler
-├── login.php               # Enhanced login with Auth0 SSO
-├── logout.php              # Secure logout with Auth0 support
-├── password_reset_request.php # Password reset request
-├── password_reset.php      # Password reset confirmation
-├── composer.json           # Composer configuration
+├── config/                     # Configuration files
+│   ├── database.php            # Database configuration
+│   ├── auth0_config.php        # Auth0 SSO configuration
+│   └── paypal_config.php       # ✨ PayPal API configuration
+├── includes/                   # Reusable components
+│   ├── header.php              # Glassmorphism header with SVG icons
+│   ├── footer.php              # Enhanced footer
+│   ├── functions.php           # Utility functions
+│   ├── auth0_functions.php     # Auth0 helper functions
+│   ├── booking_functions.php   # Booking helper functions
+│   ├── paypal_functions.php    # ✨ PayPal SDK wrapper functions
+│   ├── admin_auth.php          # Admin authentication guard
+│   └── tenant_auth.php         # Tenant authentication guard
+├── public/                     # Public pages
+│   ├── index.php               # Homepage
+│   ├── rooms.php               # Room browsing with filters
+│   ├── room_view.php           # Room detail view with gallery
+│   └── booking.php             # Room booking form
+├── tenant/                     # Tenant portal
+│   ├── portal.php              # Tenant dashboard
+│   ├── profile.php             # Profile management
+│   ├── bookings.php            # Tenant booking management
+│   ├── booking_calendar.php    # Tenant booking calendar
+│   ├── view_booking_details.php # ✨ Detailed booking information
+│   ├── payments.php            # ✨ Payment history with multi-room support
+│   ├── make_payment.php        # ✨ PayPal payment initiation
+│   ├── payment_success.php     # ✨ PayPal success handler
+│   └── payment_cancel.php      # ✨ PayPal cancellation handler
+├── uploads/                    # User uploads (excluded from git)
+├── profiles/                   # Profile picture uploads
+├── vendor/                     # Composer dependencies
+│   ├── auth0/                  # Auth0 PHP SDK
+│   ├── guzzlehttp/             # HTTP client
+│   ├── paypal/                 # ✨ PayPal Checkout SDK
+│   └── ...
+├── callback.php                # Auth0 callback handler
+├── login.php                   # Login with Auth0 SSO
+├── logout.php                  # Secure logout
+├── password_reset_request.php  # Password reset request
+├── password_reset.php          # Password reset confirmation
+├── test_paypal.php             # ✨ PayPal integration test
+├── test_auth0.php              # ✨ Auth0 integration test
+├── composer.json               # Composer configuration
+├── dormitory_db.sql            # Database schema
 ├── .gitignore
 ├── README.md
 ├── PHASE1_SUMMARY.md
 ├── PHASE2_SUMMARY.md
 ├── PHASE3_SUMMARY.md
-├── PHASE4_SUMMARY.md       # ✨ Enhanced booking system documentation
-└── PHASE4.5_SUMMARY.md     # Auth0 SSO integration documentation
+├── PHASE4_SUMMARY.md
+└── PHASE5_SUMMARY.md           # ✨ PayPal integration documentation
 ```
 
 ## Security Features
@@ -200,10 +233,25 @@ dormitory-management-system/
 - `booking_conflicts` - ✨ Booking conflict tracking
 - `notifications` - ✨ In-app notification system
 
-### Enhanced Fields (Phase 4 & 4.5)
+### PayPal Integration Tables (Phase 5)
+- `paypal_transactions` - ✨ PayPal order and capture tracking
+  - `id` - Primary key
+  - `tenant_id` - Foreign key to users
+  - `room_id` - Foreign key to rooms
+  - `booking_id` - Foreign key to bookings
+  - `paypal_order_id` - PayPal order reference
+  - `amount` - Transaction amount
+  - `payment_period` - Number of months paid
+  - `status` - pending/completed/failed/cancelled
+  - `capture_id` - PayPal capture ID after successful payment
+  - `payer_email` - PayPal payer email
+  - `created_at`, `updated_at` - Timestamps
+
+### Enhanced Fields (Phase 4, 4.5 & 5)
 - **Bookings**: `duration_months`, `total_amount`, `approved_by`, `approved_at`, `rejected_reason`, `check_in_date`, `check_out_date`
 - **Users**: `auth0_id`, `profile_picture`, `email_verified`, `remember_token`, `two_factor_enabled`
 - **Rooms**: `floor_number`, `category`, `has_wifi`, `has_ac`, `has_bathroom`
+- **Payments**: `paypal_transaction_id`, `paypal_capture_id` ✨ NEW
 
 ## New Features in Phase 4
 
@@ -239,6 +287,38 @@ dormitory-management-system/
 - ✅ Payment trend analysis
 - ✅ Visual data representation
 
+## New Features in Phase 5 ✨
+
+### PayPal Payment Integration
+- ✅ PayPal Checkout SDK integration (Sandbox & Production)
+- ✅ Secure payment order creation with PayPal API
+- ✅ Payment capture and verification
+- ✅ Transaction tracking with paypal_transactions table
+- ✅ Payment success and cancellation handling
+- ✅ PayPal payer email and capture ID storage
+
+### Multi-Room Payment Support
+- ✅ Tenants can pay for multiple bookings
+- ✅ Room selector tabs for tenants with multiple rooms
+- ✅ Flexible payment duration (1-12 months)
+- ✅ Dynamic total calculation based on room rate and duration
+- ✅ Room filter on payment history page
+
+### Enhanced Reports Dashboard
+- ✅ Tabbed interface (Payments, Revenue, Occupancy, Tenants)
+- ✅ CSV export for all report types
+- ✅ Payment methods breakdown (Cash vs PayPal)
+- ✅ PayPal analytics section with Chart.js
+- ✅ Monthly revenue tables with export
+- ✅ Room occupancy grid visualization
+- ✅ Tenant activity reports
+
+### Admin Payment Tracking
+- ✅ PayPal transaction details in payment views
+- ✅ Dashboard PayPal revenue statistics
+- ✅ Tenant payment summaries with PayPal indicators
+- ✅ Booking view with payment method display
+
 ## Usage Guide
 
 ### For Administrators
@@ -263,10 +343,12 @@ dormitory-management-system/
 5. **Submit Booking** - Request to book a room with date selection
 6. **Track Status** - Monitor booking status in real-time
 7. **View Calendar** - See your bookings in calendar format
-8. **Make Payments** - Track payment history and status
-9. **Update Profile** - Manage personal information and photo
-10. **Read Announcements** - Stay informed about updates
-11. **Receive Notifications** - Get instant updates on booking changes
+8. **Make PayPal Payments** - Pay securely via PayPal for one or multiple rooms
+9. **Choose Payment Duration** - Select 1-12 months for flexible payments
+10. **View Payment History** - Track all transactions with PayPal details
+11. **Update Profile** - Manage personal information and photo
+12. **Read Announcements** - Stay informed about updates
+13. **Receive Notifications** - Get instant updates on booking changes
 
 ## Development Roadmap
 
@@ -274,33 +356,34 @@ dormitory-management-system/
 - [x] Phase 2: User Authentication System
 - [x] Phase 3: Room Management Module
 - [x] Phase 4: Enhanced Booking System ✨ **COMPLETED**
-- [x] Phase 4.5: Single Sign-On using Auth0
-- [ ] Phase 5: Maintenance Request System - **NEXT**
-- [ ] Phase 6: Email Notifications (SMTP integration)
-- [ ] Phase 7: Advanced Reports (more charts, PDF exports)
-- [ ] Phase 8: Payment Integration (payment gateway, receipts)
+- [x] Phase 4.5: Single Sign-On using Auth0 ✅
+- [x] Phase 5: Payment Integration (PayPal) ✨ **COMPLETED**
+- [ ] Phase 6: Hostinger Production Deployment - **IN PROGRESS**
+- [ ] Phase 7: Email Notifications (SMTP integration)
+- [ ] Phase 8: Maintenance Request System
 - [ ] Phase 9: Testing & Security Hardening
-- [ ] Phase 10: Production Deployment
+- [ ] Phase 10: Advanced Features (2FA, receipts, etc.)
 
 ## Project Statistics
 
 ### Overall Progress
-- **Total Files**: 45+
-- **Total Lines of Code**: 8,000+
-- **Database Tables**: 13
-- **Admin Pages**: 9
-- **Tenant Pages**: 5
+- **Total Files**: 55+
+- **Total Lines of Code**: 12,000+
+- **Database Tables**: 14
+- **Admin Pages**: 13
+- **Tenant Pages**: 9
 - **Public Pages**: 4
-- **External Integrations**: 1 (Auth0)
-- **Composer Packages**: 3
+- **External Integrations**: 2 (Auth0, PayPal)
+- **Composer Packages**: 5+
 
 ### Phase Completion
 - ✅ Phase 1: Complete (October 2025)
 - ✅ Phase 2: Complete (October 2025)
 - ✅ Phase 3: Complete (November 2025)
-- ✅ Phase 4: Complete (November 2025) ✨ **NEW**
+- ✅ Phase 4: Complete (November 2025)
 - ✅ Phase 4.5: Complete (November 2025)
-- ⏳ Phase 5: Planned
+- ✅ Phase 5: Complete (November 2025) ✨ **NEW**
+- ⏳ Phase 6: In Progress
 
 ## Design System
 
@@ -337,6 +420,42 @@ dormitory-management-system/
 - Email/Password authentication
 - Profile information (name, email)
 
+## PayPal Configuration
+
+### Setup Instructions
+1. Create a PayPal Developer account at https://developer.paypal.com
+2. Create a REST API app in the Developer Dashboard
+3. Copy Client ID and Secret to `config/paypal_config.php`
+
+### Required Settings in config/paypal_config.php
+```php
+define('PAYPAL_CLIENT_ID', 'your-client-id');
+define('PAYPAL_CLIENT_SECRET', 'your-client-secret');
+define('PAYPAL_MODE', 'sandbox'); // 'sandbox' or 'live'
+```
+
+### Environment Modes
+- **Sandbox**: For development and testing (uses sandbox.paypal.com)
+- **Live**: For production (uses api.paypal.com)
+
+### Callback URLs
+- **Success URL**: `/tenant/payment_success.php`
+- **Cancel URL**: `/tenant/payment_cancel.php`
+
+## Hostinger Deployment
+
+### Database Configuration
+Update `config/database.php` for Hostinger:
+```php
+$host = 'localhost';
+$database = 'your_hostinger_db';
+$username = 'your_hostinger_user';
+$password = 'your_hostinger_password';
+```
+
+### Environment Detection
+The system automatically detects localhost vs production environment for proper URL handling.
+
 ## Contributing
 
 1. Fork the repository
@@ -347,9 +466,10 @@ dormitory-management-system/
 
 ## Known Issues
 
-- Email sending requires SMTP configuration (Phase 6)
+- Email sending requires SMTP configuration (Phase 7)
 - Remember me functionality needs cookie implementation
 - Two-factor authentication is prepared but not active
+- PayPal webhooks not yet implemented (manual verification only)
 
 ## Troubleshooting
 
@@ -369,6 +489,13 @@ dormitory-management-system/
 - Check JavaScript console for errors
 - Verify database has booking records
 
+### PayPal Payment Issues
+- Verify PayPal credentials in `config/paypal_config.php`
+- Check PayPal mode is set correctly (sandbox/live)
+- Ensure PayPal SDK is installed via Composer
+- Check browser console for JavaScript errors
+- Verify return URLs are accessible
+
 ### Modal Not Appearing
 - Ensure CSS is loaded properly
 - Check for JavaScript errors
@@ -386,15 +513,17 @@ For support and questions, please contact the system administrator.
 
 - Built with PHP, MySQL, JavaScript, HTML5, CSS3
 - Authentication: Auth0
+- Payments: PayPal Checkout SDK
 - HTTP Client: Guzzle
+- Charts: Chart.js
 - Design: Custom gradient-based modern UI
 - Icons: Custom SVG icons
 - Font: Inter (Google Fonts)
 
 ---
 
-**Current Version**: 2.0.0
+**Current Version**: 3.0.0
 
-**Last Updated**: November 19, 2025
+**Last Updated**: November 27, 2025
 
-**Status**: ✅ Phase 1, 2, 3, 4, 4.5 Complete - Phase 5 Next
+**Status**: ✅ Phase 1, 2, 3, 4, 4.5, 5 Complete - Phase 6 (Hostinger Deployment) In Progress

@@ -1,5 +1,5 @@
 <?php
-// filepath: tenant/payments.php
+// filepath: c:\xampp\htdocs\dormitory-management-system\tenant\payments.php
 require_once '../config/database.php';
 require_once '../includes/tenant_auth.php';
 require_once '../includes/functions.php';
@@ -7,16 +7,32 @@ require_once '../includes/functions.php';
 $page_title = 'My Payments';
 $tenant_id = $_SESSION['user_id'];
 
+// Get ALL tenant's active bookings for "Make Payment" buttons
+$bookings_query = $conn->prepare("
+    SELECT b.id, b.status, b.room_id, r.room_number, r.price, r.room_type
+    FROM bookings b
+    JOIN rooms r ON b.room_id = r.id
+    WHERE b.tenant_id = ? AND b.status IN ('approved', 'checked_in')
+    ORDER BY r.room_number ASC
+");
+$bookings_query->bind_param("i", $tenant_id);
+$bookings_query->execute();
+$active_bookings = $bookings_query->get_result()->fetch_all(MYSQLI_ASSOC);
+$bookings_query->close();
+
 // Get filter parameters
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
 $year_filter = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+$room_filter = isset($_GET['room']) ? (int)$_GET['room'] : 0;
 
 // Build query
 $query = "
-    SELECT p.*, b.id as booking_id, r.room_number 
+    SELECT p.*, b.id as booking_id, r.room_number, r.room_type,
+           pt.payer_email as paypal_email, pt.capture_id as paypal_capture
     FROM payments p
     LEFT JOIN bookings b ON p.booking_id = b.id
-    LEFT JOIN rooms r ON b.room_id = r.id
+    LEFT JOIN rooms r ON p.room_id = r.id
+    LEFT JOIN paypal_transactions pt ON p.paypal_transaction_id = pt.paypal_order_id
     WHERE p.tenant_id = ?
 ";
 
@@ -32,6 +48,12 @@ if ($status_filter !== 'all') {
 if ($year_filter) {
     $query .= " AND YEAR(p.payment_date) = ?";
     $params[] = $year_filter;
+    $types .= "i";
+}
+
+if ($room_filter > 0) {
+    $query .= " AND p.room_id = ?";
+    $params[] = $room_filter;
     $types .= "i";
 }
 
@@ -51,7 +73,9 @@ $stats_query = "
         SUM(CASE WHEN status = 'confirmed' THEN amount ELSE 0 END) as confirmed_amount,
         SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) as pending_amount,
         SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_count,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+        SUM(CASE WHEN payment_method = 'paypal' THEN amount ELSE 0 END) as paypal_amount,
+        SUM(CASE WHEN payment_method = 'paypal' THEN 1 ELSE 0 END) as paypal_count
     FROM payments 
     WHERE tenant_id = ?
 ";
@@ -67,6 +91,20 @@ $stmt = $conn->prepare($years_query);
 $stmt->bind_param("i", $tenant_id);
 $stmt->execute();
 $years_result = $stmt->get_result();
+$stmt->close();
+
+// Get all rooms tenant has paid for (for filter)
+$rooms_query = "
+    SELECT DISTINCT r.id, r.room_number 
+    FROM payments p
+    JOIN rooms r ON p.room_id = r.id
+    WHERE p.tenant_id = ?
+    ORDER BY r.room_number
+";
+$stmt = $conn->prepare($rooms_query);
+$stmt->bind_param("i", $tenant_id);
+$stmt->execute();
+$rooms_filter_result = $stmt->get_result();
 $stmt->close();
 
 // Get monthly breakdown for current year
@@ -102,10 +140,111 @@ require_once '../includes/header.php';
         to { opacity: 1; transform: translateY(0); }
     }
     
+    /* Active Bookings Section */
+    .active-bookings-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+    }
+    
+    .active-bookings-section h2 {
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .bookings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+    
+    .booking-payment-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .booking-payment-card:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-4px);
+    }
+    
+    .booking-room-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .booking-room-number {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+    
+    .booking-room-type {
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+    
+    .booking-status-badge {
+        background: rgba(16, 185, 129, 0.3);
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .booking-price {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .booking-pay-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .booking-pay-btn:hover {
+        background: #f0f0f0;
+        transform: scale(1.02);
+    }
+    
+    .booking-pay-btn.paypal {
+        background: #0070ba;
+        color: white;
+    }
+    
+    .booking-pay-btn.paypal:hover {
+        background: #005ea6;
+    }
+    
     /* Payment Stats Cards */
     .payment-stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -113,7 +252,7 @@ require_once '../includes/header.php';
     .payment-stat-card {
         background: white;
         border-radius: 20px;
-        padding: 2rem;
+        padding: 1.75rem;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
         border: 2px solid #e2e8f0;
         position: relative;
@@ -146,16 +285,16 @@ require_once '../includes/header.php';
     .payment-stat-card.total::before { background: #667eea; }
     .payment-stat-card.confirmed::before { background: #10b981; }
     .payment-stat-card.pending::before { background: #f59e0b; }
-    .payment-stat-card.average::before { background: #3b82f6; }
+    .payment-stat-card.paypal::before { background: #0070ba; }
     
     .payment-stat-icon {
-        width: 60px;
-        height: 60px;
+        width: 50px;
+        height: 50px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         margin-bottom: 1rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         position: relative;
@@ -174,21 +313,21 @@ require_once '../includes/header.php';
         background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
     }
     
-    .payment-stat-card.average .payment-stat-icon {
-        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    .payment-stat-card.paypal .payment-stat-icon {
+        background: linear-gradient(135deg, #0070ba 0%, #003087 100%);
     }
     
     .payment-stat-value {
-        font-size: 2rem;
+        font-size: 1.75rem;
         font-weight: 800;
         color: #1e293b;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
         position: relative;
         z-index: 1;
     }
     
     .payment-stat-label {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: #64748b;
         font-weight: 600;
         position: relative;
@@ -196,7 +335,7 @@ require_once '../includes/header.php';
     }
     
     .payment-stat-count {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: #94a3b8;
         margin-top: 0.25rem;
         position: relative;
@@ -222,7 +361,7 @@ require_once '../includes/header.php';
     
     .filter-group {
         flex: 1;
-        min-width: 200px;
+        min-width: 150px;
     }
     
     .filter-label {
@@ -230,15 +369,15 @@ require_once '../includes/header.php';
         font-weight: 600;
         color: #475569;
         margin-bottom: 0.5rem;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
     
     .filter-select {
         width: 100%;
-        padding: 0.875rem 1.25rem;
+        padding: 0.75rem 1rem;
         border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        font-size: 1rem;
+        border-radius: 10px;
+        font-size: 0.95rem;
         transition: all 0.3s ease;
         background: white;
     }
@@ -260,7 +399,7 @@ require_once '../includes/header.php';
     
     .chart-card h2 {
         margin: 0 0 1.5rem 0;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         font-weight: 800;
         color: #1e293b;
         display: flex;
@@ -280,7 +419,7 @@ require_once '../includes/header.php';
     }
     
     .chart-container {
-        height: 300px;
+        height: 250px;
         position: relative;
     }
     
@@ -303,30 +442,30 @@ require_once '../includes/header.php';
     .bar {
         width: 100%;
         background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-        border-radius: 8px 8px 0 0;
+        border-radius: 6px 6px 0 0;
         position: relative;
         transition: all 0.3s ease;
         cursor: pointer;
+        min-height: 4px;
     }
     
     .bar:hover {
         opacity: 0.8;
-        transform: scaleY(1.05);
     }
     
     .bar-value {
         position: absolute;
-        top: -25px;
+        top: -22px;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 0.75rem;
+        font-size: 0.65rem;
         font-weight: 700;
         color: #475569;
         white-space: nowrap;
     }
     
     .bar-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         color: #64748b;
         font-weight: 600;
     }
@@ -346,7 +485,7 @@ require_once '../includes/header.php';
         padding: 1rem;
         text-align: left;
         font-weight: 700;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: #475569;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -377,24 +516,46 @@ require_once '../includes/header.php';
     }
     
     .payment-amount {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         font-weight: 700;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #10b981;
     }
     
     .payment-method-badge {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        gap: 0.4rem;
+        padding: 0.4rem 0.75rem;
         border-radius: 8px;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         font-weight: 600;
-        color: #475569;
+    }
+    
+    .payment-method-badge.paypal {
+        background: rgba(0, 112, 186, 0.1);
+        color: #0070ba;
+    }
+    
+    .payment-method-badge.cash {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+    
+    .payment-method-badge.bank {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+    
+    .room-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.75rem;
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        border-radius: 8px;
+        font-weight: 600;
+        color: #667eea;
+        font-size: 0.875rem;
     }
     
     /* Empty State */
@@ -407,7 +568,7 @@ require_once '../includes/header.php';
     }
     
     .empty-icon-large {
-        font-size: 5rem;
+        font-size: 4rem;
         margin-bottom: 1.5rem;
         opacity: 0.3;
     }
@@ -446,10 +607,27 @@ require_once '../includes/header.php';
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     
+    /* No bookings message */
+    .no-bookings-msg {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2rem;
+        border-radius: 12px;
+        text-align: center;
+    }
+    
+    .no-bookings-msg a {
+        color: white;
+        text-decoration: underline;
+    }
+    
     /* Responsive */
     @media (max-width: 768px) {
         .payment-stats-grid {
             grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .bookings-grid {
+            grid-template-columns: 1fr;
         }
         
         .filter-row {
@@ -461,12 +639,12 @@ require_once '../includes/header.php';
         }
         
         .payments-table-enhanced {
-            font-size: 0.875rem;
+            font-size: 0.85rem;
         }
         
         .payments-table-enhanced th,
         .payments-table-enhanced td {
-            padding: 0.75rem;
+            padding: 0.75rem 0.5rem;
         }
         
         .bar-chart {
@@ -474,7 +652,7 @@ require_once '../includes/header.php';
         }
         
         .bar-label {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
         }
     }
 </style>
@@ -484,18 +662,15 @@ require_once '../includes/header.php';
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
-                <h1>Payment History</h1>
+                <h1>💳 Payment History</h1>
                 <p class="subtitle">Track all your payment transactions</p>
             </div>
-            <div style="display: flex; gap: 0.75rem;">
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                 <a href="portal.php" class="btn-enhanced outline">
                     ← Back to Portal
                 </a>
                 <button onclick="window.print()" class="export-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
-                    </svg>
-                    Print Report
+                    🖨️ Print Report
                 </button>
             </div>
         </div>
@@ -504,39 +679,62 @@ require_once '../includes/header.php';
 
 <div class="container payments-page">
     
+    <!-- Active Bookings - Make Payment Section -->
+    <?php if (!empty($active_bookings)): ?>
+    <div class="active-bookings-section">
+        <h2>🏠 Your Active Rooms - Make a Payment</h2>
+        <div class="bookings-grid">
+            <?php foreach ($active_bookings as $booking): ?>
+                <div class="booking-payment-card">
+                    <div class="booking-room-info">
+                        <div>
+                            <div class="booking-room-number">Room <?php echo htmlspecialchars($booking['room_number']); ?></div>
+                            <div class="booking-room-type"><?php echo ucfirst(htmlspecialchars($booking['room_type'])); ?></div>
+                        </div>
+                        <span class="booking-status-badge">
+                            <?php echo ucfirst(str_replace('_', ' ', $booking['status'])); ?>
+                        </span>
+                    </div>
+                    <div class="booking-price">
+                        <?php echo format_currency($booking['price']); ?> / month
+                    </div>
+                    <a href="make_payment.php?booking_id=<?php echo $booking['id']; ?>" class="booking-pay-btn paypal">
+                        🅿️ Pay with PayPal
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+    
     <!-- Payment Statistics -->
     <div class="payment-stats-grid">
         <div class="payment-stat-card total">
             <div class="payment-stat-icon">💰</div>
             <div class="payment-stat-value"><?php echo format_currency($stats['total_amount'] ?? 0); ?></div>
-            <div class="payment-stat-label">Total Amount</div>
-            <div class="payment-stat-count"><?php echo $stats['total_count']; ?> transaction(s)</div>
+            <div class="payment-stat-label">Total Payments</div>
+            <div class="payment-stat-count"><?php echo $stats['total_count'] ?? 0; ?> transactions</div>
         </div>
         
         <div class="payment-stat-card confirmed">
             <div class="payment-stat-icon">✓</div>
             <div class="payment-stat-value"><?php echo format_currency($stats['confirmed_amount'] ?? 0); ?></div>
-            <div class="payment-stat-label">Confirmed Payments</div>
-            <div class="payment-stat-count"><?php echo $stats['confirmed_count']; ?> confirmed</div>
+            <div class="payment-stat-label">Confirmed</div>
+            <div class="payment-stat-count"><?php echo $stats['confirmed_count'] ?? 0; ?> confirmed</div>
         </div>
         
         <div class="payment-stat-card pending">
             <div class="payment-stat-icon">⏳</div>
             <div class="payment-stat-value"><?php echo format_currency($stats['pending_amount'] ?? 0); ?></div>
-            <div class="payment-stat-label">Pending Payments</div>
-            <div class="payment-stat-count"><?php echo $stats['pending_count']; ?> pending</div>
+            <div class="payment-stat-label">Pending</div>
+            <div class="payment-stat-count"><?php echo $stats['pending_count'] ?? 0; ?> pending</div>
         </div>
         
-        <div class="payment-stat-card average">
-            <div class="payment-stat-icon">📊</div>
-            <div class="payment-stat-value">
-                <?php 
-                $avg = $stats['total_count'] > 0 ? $stats['total_amount'] / $stats['total_count'] : 0;
-                echo format_currency($avg); 
-                ?>
-            </div>
-            <div class="payment-stat-label">Average Payment</div>
-            <div class="payment-stat-count">per transaction</div>
+        <div class="payment-stat-card paypal">
+            <div class="payment-stat-icon">🅿️</div>
+            <div class="payment-stat-value"><?php echo format_currency($stats['paypal_amount'] ?? 0); ?></div>
+            <div class="payment-stat-label">PayPal Payments</div>
+            <div class="payment-stat-count"><?php echo $stats['paypal_count'] ?? 0; ?> via PayPal</div>
         </div>
     </div>
     
@@ -555,9 +753,9 @@ require_once '../includes/header.php';
                     $height = $max_value > 0 ? ($amount / $max_value) * 100 : 0;
                 ?>
                     <div class="bar-wrapper">
-                        <div class="bar" style="height: <?php echo $height; ?>%;" title="<?php echo format_currency($amount); ?>">
+                        <div class="bar" style="height: <?php echo max($height, 2); ?>%;" title="<?php echo format_currency($amount); ?>">
                             <?php if ($amount > 0): ?>
-                                <span class="bar-value"><?php echo format_currency($amount); ?></span>
+                                <span class="bar-value"><?php echo '₱' . number_format($amount/1000, 1) . 'k'; ?></span>
                             <?php endif; ?>
                         </div>
                         <div class="bar-label"><?php echo $months[$month - 1]; ?></div>
@@ -581,29 +779,49 @@ require_once '../includes/header.php';
                 </div>
                 
                 <div class="filter-group">
-                    <label class="filter-label">Year</label>
-                    <select name="year" class="filter-select">
+                    <label class="filter-label">Room</label>
+                    <select name="room" class="filter-select">
+                        <option value="0">All Rooms</option>
                         <?php 
-                        $years_result->data_seek(0);
-                        while ($year = $years_result->fetch_assoc()): 
+                        $rooms_filter_result->data_seek(0);
+                        while ($room = $rooms_filter_result->fetch_assoc()): 
                         ?>
-                            <option value="<?php echo $year['year']; ?>" <?php echo $year_filter == $year['year'] ? 'selected' : ''; ?>>
-                                <?php echo $year['year']; ?>
+                            <option value="<?php echo $room['id']; ?>" <?php echo $room_filter == $room['id'] ? 'selected' : ''; ?>>
+                                Room <?php echo htmlspecialchars($room['room_number']); ?>
                             </option>
                         <?php endwhile; ?>
                     </select>
                 </div>
                 
                 <div class="filter-group">
+                    <label class="filter-label">Year</label>
+                    <select name="year" class="filter-select">
+                        <?php 
+                        $years_result->data_seek(0);
+                        $has_years = false;
+                        while ($year = $years_result->fetch_assoc()): 
+                            $has_years = true;
+                        ?>
+                            <option value="<?php echo $year['year']; ?>" <?php echo $year_filter == $year['year'] ? 'selected' : ''; ?>>
+                                <?php echo $year['year']; ?>
+                            </option>
+                        <?php endwhile; ?>
+                        <?php if (!$has_years): ?>
+                            <option value="<?php echo date('Y'); ?>" selected><?php echo date('Y'); ?></option>
+                        <?php endif; ?>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
                     <button type="submit" class="btn-enhanced primary" style="width: 100%;">
-                        Apply Filter
+                        🔍 Apply Filter
                     </button>
                 </div>
                 
-                <?php if ($status_filter !== 'all' || $year_filter != date('Y')): ?>
+                <?php if ($status_filter !== 'all' || $year_filter != date('Y') || $room_filter > 0): ?>
                 <div class="filter-group">
                     <a href="payments.php" class="btn-enhanced outline" style="width: 100%; display: block; text-align: center;">
-                        Clear Filters
+                        ✕ Clear
                     </a>
                 </div>
                 <?php endif; ?>
@@ -623,47 +841,55 @@ require_once '../includes/header.php';
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Amount</th>
                                 <th>Room</th>
+                                <th>Amount</th>
                                 <th>Period</th>
                                 <th>Method</th>
                                 <th>Reference</th>
                                 <th>Status</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php while ($payment = $payments_result->fetch_assoc()): ?>
                                 <tr>
-                                    <td><?php echo date('M d, Y', strtotime($payment['payment_date'])); ?></td>
-                                    <td><span class="payment-amount"><?php echo format_currency($payment['amount']); ?></span></td>
+                                    <td>
+                                        <div style="font-weight: 600;"><?php echo date('M d, Y', strtotime($payment['payment_date'])); ?></div>
+                                        <div style="font-size: 0.75rem; color: #94a3b8;"><?php echo date('h:i A', strtotime($payment['payment_date'])); ?></div>
+                                    </td>
                                     <td>
                                         <?php if ($payment['room_number']): ?>
-                                            <strong>Room <?php echo htmlspecialchars($payment['room_number']); ?></strong>
+                                            <span class="room-badge">
+                                                🏠 <?php echo htmlspecialchars($payment['room_number']); ?>
+                                            </span>
                                         <?php else: ?>
                                             <span style="color: #94a3b8;">N/A</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo htmlspecialchars($payment['payment_period'] ?? 'N/A'); ?></td>
+                                    <td><span class="payment-amount"><?php echo format_currency($payment['amount']); ?></span></td>
+                                    <td><?php echo htmlspecialchars($payment['payment_period'] ?? '-'); ?></td>
                                     <td>
-                                        <span class="payment-method-badge">
-                                            <?php 
-                                            $method_icons = [
-                                                'cash' => '💵',
-                                                'bank_transfer' => '🏦',
-                                                'credit_card' => '💳',
-                                                'debit_card' => '💳',
-                                                'online' => '🌐'
-                                            ];
-                                            $method = strtolower($payment['payment_method'] ?? '');
-                                            echo $method_icons[$method] ?? '💰';
-                                            ?>
-                                            <?php echo htmlspecialchars($payment['payment_method'] ?? 'N/A'); ?>
+                                        <?php 
+                                        $method = strtolower($payment['payment_method'] ?? 'cash');
+                                        $method_class = $method === 'paypal' ? 'paypal' : ($method === 'bank' || $method === 'bank_transfer' ? 'bank' : 'cash');
+                                        $method_icons = ['paypal' => '🅿️', 'cash' => '💵', 'bank' => '🏦', 'bank_transfer' => '🏦'];
+                                        ?>
+                                        <span class="payment-method-badge <?php echo $method_class; ?>">
+                                            <?php echo $method_icons[$method] ?? '💳'; ?>
+                                            <?php echo ucfirst($method); ?>
                                         </span>
+                                        <?php if ($payment['paypal_email']): ?>
+                                            <div style="font-size: 0.7rem; color: #0070ba; margin-top: 0.25rem;">
+                                                <?php echo htmlspecialchars($payment['paypal_email']); ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if ($payment['reference_number']): ?>
-                                            <code style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                        <?php if ($payment['paypal_capture_id']): ?>
+                                            <code style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; display: inline-block; max-width: 120px; overflow: hidden; text-overflow: ellipsis;">
+                                                <?php echo htmlspecialchars($payment['paypal_capture_id']); ?>
+                                            </code>
+                                        <?php elseif ($payment['reference_number']): ?>
+                                            <code style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
                                                 <?php echo htmlspecialchars($payment['reference_number']); ?>
                                             </code>
                                         <?php else: ?>
@@ -671,19 +897,9 @@ require_once '../includes/header.php';
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <span class="badge-enhanced <?php echo $payment['status'] === 'confirmed' ? 'success' : 'warning'; ?>">
+                                        <span class="badge-enhanced <?php echo $payment['status'] === 'confirmed' ? 'success' : ($payment['status'] === 'pending' ? 'warning' : 'danger'); ?>">
                                             <?php echo ucfirst($payment['status']); ?>
                                         </span>
-                                    </td>
-                                    <td>
-                                        <?php if ($payment['booking_id']): ?>
-                                            <a href="view_booking_details.php?id=<?php echo $payment['booking_id']; ?>" 
-                                               class="btn-enhanced outline sm">
-                                                View Booking
-                                            </a>
-                                        <?php else: ?>
-                                            <span style="color: #94a3b8;">-</span>
-                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
@@ -695,60 +911,32 @@ require_once '../includes/header.php';
                     <div class="empty-icon-large">💳</div>
                     <h3>No Payments Found</h3>
                     <p>
-                        <?php if ($status_filter !== 'all' || $year_filter != date('Y')): ?>
-                            No payments matching your filter criteria.
+                        <?php if ($status_filter !== 'all' || $year_filter != date('Y') || $room_filter > 0): ?>
+                            No payments match your current filters.
                         <?php else: ?>
                             You haven't made any payments yet.
                         <?php endif; ?>
                     </p>
-                    <?php if ($status_filter !== 'all' || $year_filter != date('Y')): ?>
-                        <a href="payments.php" class="btn-enhanced primary">
-                            Clear Filters
-                        </a>
-                    <?php else: ?>
-                        <a href="../public/rooms.php" class="btn-enhanced primary">
-                            Browse Available Rooms
-                        </a>
-                    <?php endif; ?>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <?php if ($status_filter !== 'all' || $year_filter != date('Y') || $room_filter > 0): ?>
+                            <a href="payments.php" class="btn-enhanced primary">
+                                Clear Filters
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($active_bookings)): ?>
+                            <a href="make_payment.php?booking_id=<?php echo $active_bookings[0]['id']; ?>" class="btn-enhanced primary" style="background: linear-gradient(135deg, #0070ba 0%, #003087 100%);">
+                                🅿️ Make Payment via PayPal
+                            </a>
+                        <?php else: ?>
+                            <a href="../public/rooms.php" class="btn-enhanced primary">
+                                Browse Available Rooms
+                            </a>
+                        <?php endif; ?>
+                    </div>
                 </div>
             <?php endif; ?>
-        </div>
-    </div>
-    
-    <!-- Payment Notes -->
-    <div class="card-modern" style="margin-top: 2rem;">
-        <div class="card-header-modern">
-            <h2 style="margin: 0;">
-                <span class="chart-icon" style="width: 35px; height: 35px; font-size: 1rem;">ℹ️</span>
-                Payment Information
-            </h2>
-        </div>
-        <div class="card-body-modern">
-            <div style="display: grid; gap: 1rem;">
-                <div style="padding: 1rem; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 12px; border-left: 4px solid #3b82f6;">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #1e40af;">💡 Payment Status</h4>
-                    <ul style="margin: 0; padding-left: 1.5rem; color: #1e3a8a;">
-                        <li><strong>Confirmed:</strong> Payment has been verified and processed</li>
-                        <li><strong>Pending:</strong> Payment is awaiting verification</li>
-                    </ul>
-                </div>
-                
-                <div style="padding: 1rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; border-left: 4px solid #10b981;">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #065f46;">📋 Payment Methods</h4>
-                    <p style="margin: 0; color: #064e3b;">
-                        We accept various payment methods including cash, bank transfer, and online payments. 
-                        Please keep your reference number for future reference.
-                    </p>
-                </div>
-                
-                <div style="padding: 1rem; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border-left: 4px solid #f59e0b;">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #78350f;">⚠️ Important Note</h4>
-                    <p style="margin: 0; color: #78350f;">
-                        If you have any questions about your payments or notice any discrepancies, 
-                        please contact the administration immediately.
-                    </p>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -756,13 +944,11 @@ require_once '../includes/header.php';
 <script>
 // Print functionality
 window.addEventListener('beforeprint', function() {
-    document.querySelectorAll('.btn-enhanced').forEach(btn => btn.style.display = 'none');
-    document.querySelector('.page-header-enhanced').style.display = 'none';
+    document.querySelectorAll('.btn-enhanced, .export-btn, .booking-pay-btn').forEach(btn => btn.style.display = 'none');
 });
 
 window.addEventListener('afterprint', function() {
-    document.querySelectorAll('.btn-enhanced').forEach(btn => btn.style.display = '');
-    document.querySelector('.page-header-enhanced').style.display = '';
+    document.querySelectorAll('.btn-enhanced, .export-btn, .booking-pay-btn').forEach(btn => btn.style.display = '');
 });
 </script>
 

@@ -52,39 +52,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Handle profile photo upload
     if (isset($_POST['update_photo']) && verify_csrf_token($_POST['csrf_token'])) {
-        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
-            $upload_result = upload_file($_FILES['profile_photo'], ['jpg', 'jpeg', 'png'], 5242880);
-            
-            if ($upload_result['success']) {
-                $photo_path = 'profiles/' . $upload_result['filename'];
-                
-                // Delete old photo
-                $old_query = $conn->prepare("SELECT profile_photo FROM users WHERE id = ?");
-                $old_query->bind_param("i", $admin_id);
-                $old_query->execute();
-                $old_photo = $old_query->get_result()->fetch_assoc()['profile_photo'];
-                $old_query->close();
-                
-                if ($old_photo && file_exists('../uploads/' . $old_photo)) {
-                    unlink('../uploads/' . $old_photo);
-                }
-                
-                // Update database
-                $stmt = $conn->prepare("UPDATE users SET profile_photo = ? WHERE id = ?");
-                $stmt->bind_param("si", $photo_path, $admin_id);
-                
-                if ($stmt->execute()) {
-                    set_flash_message('Profile photo updated successfully! 📸', 'success');
-                    redirect("profile.php");
-                }
-                $stmt->close();
-            } else {
-                set_flash_message($upload_result['message'], 'error');
-            }
-        } else {
-            set_flash_message('Please select a photo to upload', 'error');
+    if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+        
+        // Create profiles directory if not exists
+        $profiles_dir = __DIR__ . '/../uploads/profiles/';
+        if (!is_dir($profiles_dir)) {
+            mkdir($profiles_dir, 0755, true);
         }
+        
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+        $max_size = 5 * 1024 * 1024; // 5MB
+        
+        $file = $_FILES['profile_photo'];
+        $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        // Validate file type
+        if (!in_array($file_ext, $allowed_types)) {
+            set_flash_message('Invalid file type. Please upload JPG, JPEG, PNG, or GIF.', 'error');
+            redirect("profile.php");
+        }
+        
+        // Validate file size
+        if ($file['size'] > $max_size) {
+            set_flash_message('File is too large. Maximum size is 5MB.', 'error');
+            redirect("profile.php");
+        }
+        
+        // Generate unique filename
+        $new_filename = 'admin_' . $admin_id . '_' . time() . '.' . $file_ext;
+        $upload_path = $profiles_dir . $new_filename;
+        $db_path = 'profiles/' . $new_filename;
+        
+        // Delete old photo if exists
+        $old_query = $conn->prepare("SELECT profile_photo FROM users WHERE id = ?");
+        $old_query->bind_param("i", $admin_id);
+        $old_query->execute();
+        $result = $old_query->get_result();
+        $old_data = $result->fetch_assoc();
+        $old_photo = $old_data['profile_photo'] ?? null;
+        $old_query->close();
+        
+        if ($old_photo && file_exists(__DIR__ . '/../uploads/' . $old_photo)) {
+            unlink(__DIR__ . '/../uploads/' . $old_photo);
+        }
+        
+        // Move uploaded file
+        if (move_uploaded_file($file['tmp_name'], $upload_path)) {
+            // Update database
+            $stmt = $conn->prepare("UPDATE users SET profile_photo = ? WHERE id = ?");
+            $stmt->bind_param("si", $db_path, $admin_id);
+            
+            if ($stmt->execute()) {
+                set_flash_message('Profile photo updated successfully! 📸', 'success');
+            } else {
+                set_flash_message('Failed to update database.', 'error');
+                // Clean up uploaded file
+                if (file_exists($upload_path)) {
+                    unlink($upload_path);
+                }
+            }
+            $stmt->close();
+        } else {
+            set_flash_message('Failed to upload file. Please check folder permissions.', 'error');
+        }
+        
+        redirect("profile.php");
+    } else {
+        $error_msg = 'Please select a photo to upload.';
+        if (isset($_FILES['profile_photo']['error'])) {
+            $error_codes = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds server limit',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds form limit',
+                UPLOAD_ERR_PARTIAL => 'File partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file selected',
+            ];
+            $error_msg = $error_codes[$_FILES['profile_photo']['error']] ?? $error_msg;
+        }
+        set_flash_message($error_msg, 'error');
+        redirect("profile.php");
     }
+}
     
     // Handle password change
     if (isset($_POST['change_password']) && verify_csrf_token($_POST['csrf_token'])) {

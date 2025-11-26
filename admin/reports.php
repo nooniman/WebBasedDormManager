@@ -53,6 +53,39 @@ while ($row = $monthly_revenue_result->fetch_assoc()) {
     $monthly_revenue_array[] = $row; // Store for table display
 }
 
+$payment_method_query = "
+    SELECT 
+        payment_method,
+        COUNT(*) as transaction_count,
+        SUM(amount) as total_amount
+    FROM payments
+    WHERE payment_date BETWEEN ? AND ?
+    AND status = 'confirmed'
+    GROUP BY payment_method
+";
+$method_stmt = $conn->prepare($payment_method_query);
+$method_stmt->bind_param("ss", $start_date, $end_date);
+$method_stmt->execute();
+$payment_methods = $method_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$method_stmt->close();
+
+// PayPal transaction success rate
+$paypal_stats_query = "
+    SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+    FROM paypal_transactions
+    WHERE created_at BETWEEN ? AND ?
+";
+$pp_stmt = $conn->prepare($paypal_stats_query);
+$pp_stmt->bind_param("ss", $start_date, $end_date);
+$pp_stmt->execute();
+$paypal_stats = $pp_stmt->get_result()->fetch_assoc();
+$pp_stmt->close();
+
 // Total revenue for date range
 $stmt = $conn->prepare("
     SELECT SUM(amount) as total, COUNT(*) as count
@@ -531,6 +564,87 @@ while ($row = $room_type_result->fetch_assoc()) {
                 </div>
             </div>
         </div>
+
+        <!-- Payment Methods Breakdown -->
+        <div class="card-enhanced mb-4">
+            <div class="card-header-enhanced">
+                <h2>
+                    <div class="header-icon">💳</div>
+                    Payment Methods Breakdown
+                </h2>
+            </div>
+            <div class="card-body-enhanced">
+                <div class="grid grid-3">
+                    <?php 
+                    $method_icons = ['paypal' => '🅿️', 'cash' => '💵', 'bank' => '🏦'];
+                    $method_colors = ['paypal' => '#0070ba', 'cash' => '#10b981', 'bank' => '#3b82f6'];
+                    foreach ($payment_methods as $method): 
+                    ?>
+                        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border-left: 4px solid <?php echo $method_colors[$method['payment_method']] ?? '#667eea'; ?>;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                                <?php echo $method_icons[$method['payment_method']] ?? '💳'; ?>
+                            </div>
+                            <div style="font-size: 1.75rem; font-weight: 800; color: <?php echo $method_colors[$method['payment_method']] ?? '#667eea'; ?>;">
+                                <?php echo format_currency($method['total_amount']); ?>
+                            </div>
+                            <div style="font-weight: 600; color: #64748b; text-transform: uppercase;">
+                                <?php echo ucfirst($method['payment_method']); ?>
+                            </div>
+                            <div style="font-size: 0.875rem; color: #94a3b8; margin-top: 0.25rem;">
+                                <?php echo $method['transaction_count']; ?> transactions
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PayPal Transaction Stats -->
+        <?php if ($paypal_stats['total'] > 0): ?>
+        <div class="card-enhanced mb-4">
+            <div class="card-header-enhanced">
+                <h2>
+                    <div class="header-icon" style="background: linear-gradient(135deg, #0070ba 0%, #003087 100%);">🅿️</div>
+                    PayPal Transaction Analytics
+                </h2>
+            </div>
+            <div class="card-body-enhanced">
+                <div class="grid grid-4">
+                    <div style="text-align: center; padding: 1.25rem; background: #dbeafe; border-radius: 10px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #1e40af;"><?php echo $paypal_stats['total']; ?></div>
+                        <div style="font-weight: 600; color: #1e40af;">Total Transactions</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.25rem; background: #d1fae5; border-radius: 10px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #065f46;"><?php echo $paypal_stats['completed']; ?></div>
+                        <div style="font-weight: 600; color: #065f46;">Completed</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.25rem; background: #fef3c7; border-radius: 10px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #92400e;"><?php echo $paypal_stats['pending']; ?></div>
+                        <div style="font-weight: 600; color: #92400e;">Pending</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.25rem; background: #fee2e2; border-radius: 10px;">
+                        <div style="font-size: 2rem; font-weight: 800; color: #991b1b;"><?php echo $paypal_stats['failed'] + $paypal_stats['cancelled']; ?></div>
+                        <div style="font-weight: 600; color: #991b1b;">Failed/Cancelled</div>
+                    </div>
+                </div>
+                
+                <?php 
+                $success_rate = $paypal_stats['total'] > 0 ? ($paypal_stats['completed'] / $paypal_stats['total']) * 100 : 0;
+                ?>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-weight: 600;">Success Rate</span>
+                        <span style="font-weight: 700; color: <?php echo $success_rate >= 80 ? '#10b981' : ($success_rate >= 50 ? '#f59e0b' : '#ef4444'); ?>">
+                            <?php echo number_format($success_rate, 1); ?>%
+                        </span>
+                    </div>
+                    <div style="height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                        <div style="height: 100%; width: <?php echo $success_rate; ?>%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 4px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
         
         <div class="card-enhanced">
             <div class="card-header-enhanced">

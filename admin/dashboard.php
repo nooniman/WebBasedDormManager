@@ -10,6 +10,20 @@ require_once '../includes/header.php';
 // Get statistics
 $stats = [];
 
+// PayPal transactions today
+$result = $conn->query("
+    SELECT COUNT(*) as count, SUM(amount) as total 
+    FROM paypal_transactions 
+    WHERE DATE(created_at) = CURDATE() AND status = 'completed'
+");
+$paypal_today = $result->fetch_assoc();
+$stats['paypal_today_count'] = $paypal_today['count'] ?? 0;
+$stats['paypal_today_amount'] = $paypal_today['total'] ?? 0;
+
+// Pending PayPal transactions
+$result = $conn->query("SELECT COUNT(*) as count FROM paypal_transactions WHERE status = 'pending'");
+$stats['pending_paypal'] = $result->fetch_assoc()['count'];
+
 // Total tenants
 $result = $conn->query("SELECT COUNT(*) as count FROM users WHERE role = 'tenant'");
 $stats['total_tenants'] = $result->fetch_assoc()['count'];
@@ -199,6 +213,15 @@ $recent_payments = $conn->query("
                     <div class="icon">💳</div>
                     <div class="title">Payments</div>
                     <div class="description">Track transactions</div>
+                </a>
+
+                <a href="payments.php?method=paypal" class="quick-action-card">
+                    <div class="icon">🅿️</div>
+                    <div class="title">PayPal Payments</div>
+                    <div class="description">
+                        <?php echo $stats['paypal_today_count']; ?> today 
+                        (<?php echo format_currency($stats['paypal_today_amount']); ?>)
+                    </div>
                 </a>
                 
                 <a href="reports.php" class="quick-action-card">

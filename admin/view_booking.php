@@ -42,8 +42,12 @@ $stmt->close();
 
 // Get payment history for this booking
 $payment_query = "
-    SELECT p.* 
+    SELECT p.*, 
+           pt.paypal_order_id,
+           pt.capture_id as paypal_capture_id,
+           pt.payer_email as paypal_payer_email
     FROM payments p
+    LEFT JOIN paypal_transactions pt ON p.paypal_transaction_id = pt.paypal_order_id
     WHERE p.tenant_id = ? 
     AND p.room_id = ?
     AND p.payment_date >= ?
@@ -1006,7 +1010,7 @@ require_once '../includes/header.php';
             </div>
             <?php endif; ?>
             
-            <!-- Payment History -->
+            <!-- Payment History - Enhanced -->
             <?php if ($payments_result && $payments_result->num_rows > 0): ?>
             <div class="info-section-modern">
                 <div class="info-section-header">
@@ -1018,21 +1022,29 @@ require_once '../includes/header.php';
                     <?php while ($payment = $payments_result->fetch_assoc()): ?>
                         <div class="payment-item-modern">
                             <div class="payment-item-left">
-                                <div class="payment-icon-circle">💳</div>
+                                <div class="payment-icon-circle" style="<?php echo $payment['payment_method'] === 'paypal' ? 'background: linear-gradient(135deg, #0070ba 0%, #003087 100%);' : ''; ?>">
+                                    <?php echo $payment['payment_method'] === 'paypal' ? '🅿️' : '💵'; ?>
+                                </div>
                                 <div class="payment-details">
                                     <div class="payment-date">
-                                        <?php echo date('F d, Y', strtotime($payment['payment_date'])); ?>
+                                        <?php echo date('M d, Y', strtotime($payment['payment_date'])); ?>
                                     </div>
                                     <div class="payment-method">
-                                        <?php echo htmlspecialchars($payment['payment_method'] ?? 'Not specified'); ?>
+                                        <?php echo ucfirst($payment['payment_method'] ?? 'Cash'); ?>
+                                        <?php if ($payment['paypal_payer_email']): ?>
+                                            <br><small style="color: #0070ba;"><?php echo htmlspecialchars($payment['paypal_payer_email']); ?></small>
+                                        <?php endif; ?>
                                     </div>
+                                    <?php if ($payment['paypal_capture_id']): ?>
+                                        <div style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">
+                                            ID: <?php echo htmlspecialchars(substr($payment['paypal_capture_id'], 0, 20)); ?>...
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="payment-item-right">
-                                <div class="payment-amount">
-                                    <?php echo format_currency($payment['amount']); ?>
-                                </div>
-                                <span class="badge-enhanced <?php echo $payment['status']; ?>">
+                                <div class="payment-amount"><?php echo format_currency($payment['amount']); ?></div>
+                                <span class="badge-enhanced <?php echo $payment['status'] === 'confirmed' ? 'success' : 'pending'; ?>">
                                     <?php echo ucfirst($payment['status']); ?>
                                 </span>
                             </div>

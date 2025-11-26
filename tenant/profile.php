@@ -4,6 +4,15 @@ require_once '../config/database.php';
 require_once '../includes/tenant_auth.php';
 require_once '../includes/functions.php';
 
+
+echo "<!-- DEBUG START -->";
+echo "<!-- DB Value: " . ($tenant['profile_picture'] ?? 'NULL') . " -->";
+$test_path = __DIR__ . '/../uploads/' . ($tenant['profile_picture'] ?? '');
+echo "<!-- Full Path: " . $test_path . " -->";
+echo "<!-- File Exists: " . (file_exists($test_path) ? 'YES' : 'NO') . " -->";
+echo "<!-- DEBUG END -->";
+
+
 $page_title = 'My Profile';
 $tenant_id = $_SESSION['user_id'];
 
@@ -62,38 +71,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Handle profile photo upload
     if (isset($_POST['update_photo']) && verify_csrf_token($_POST['csrf_token'])) {
-        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
-            $upload_result = upload_file($_FILES['profile_photo'], ['jpg', 'jpeg', 'png'], 5242880);
-            
-            if ($upload_result['success']) {
-                $photo_path = 'profiles/' . $upload_result['filename'];
-                
-                // Delete old photo
-                $old_query = $conn->prepare("SELECT profile_photo FROM users WHERE id = ?");
-                $old_query->bind_param("i", $tenant_id);
-                $old_query->execute();
-                $old_photo = $old_query->get_result()->fetch_assoc()['profile_photo'];
-                $old_query->close();
-                
-                if ($old_photo && file_exists('../uploads/' . $old_photo)) {
-                    unlink('../uploads/' . $old_photo);
-                }
-                
-                // Update database
-                $stmt = $conn->prepare("UPDATE users SET profile_photo = ? WHERE id = ?");
-                $stmt->bind_param("si", $photo_path, $tenant_id);
-                
-                if ($stmt->execute()) {
-                    set_flash_message('Profile photo updated successfully! 📸', 'success');
-                    redirect("profile.php");
-                }
-                $stmt->close();
-            } else {
-                set_flash_message($upload_result['message'], 'error');
-            }
-        } else {
-            set_flash_message('Please select a photo to upload', 'error');
+    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+        
+        // Create profiles directory if not exists
+        $profiles_dir = __DIR__ . '/../uploads/profiles/';
+        if (!is_dir($profiles_dir)) {
+            mkdir($profiles_dir, 0755, true);
         }
+        
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+        $max_size = 5 * 1024 * 1024; // 5MB
+        
+        $file = $_FILES['profile_picture'];
+        $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        
+        // Validate file type
+        if (!in_array($file_ext, $allowed_types)) {
+            set_flash_message('Invalid file type. Please upload JPG, JPEG, PNG, or GIF.', 'error');
+            redirect("profile.php");
+        }
+        
+        // Validate file size
+        if ($file['size'] > $max_size) {
+            set_flash_message('File is too large. Maximum size is 5MB.', 'error');
+            redirect("profile.php");
+        }
+        
+        // Generate unique filename
+        $new_filename = 'tenant_' . $tenant_id . '_' . time() . '.' . $file_ext;
+        $upload_path = $profiles_dir . $new_filename;
+        $db_path = 'profiles/' . $new_filename;
+        
+        // Delete old photo if exists
+        $old_query = $conn->prepare("SELECT profile_picture FROM users WHERE id = ?");
+        $old_query->bind_param("i", $tenant_id);
+        $old_query->execute();
+        $result = $old_query->get_result();
+        $old_data = $result->fetch_assoc();
+        $old_photo = $old_data['profile_picture'] ?? null;
+        $old_query->close();
+        
+        if ($old_photo && file_exists(__DIR__ . '/../uploads/' . $old_photo)) {
+            unlink(__DIR__ . '/../uploads/' . $old_photo);
+        }
+        
+        // Move uploaded file
+        if (move_uploaded_file($file['tmp_name'], $upload_path)) {
+            // Update database
+            $stmt = $conn->prepare("UPDATE users SET profile_picture = ? WHERE id = ?");
+            $stmt->bind_param("si", $db_path, $tenant_id);
+            
+            if ($stmt->execute()) {
+                set_flash_message('Profile photo updated successfully! 📸', 'success');
+            } else {
+                set_flash_message('Failed to update database.', 'error');
+                if (file_exists($upload_path)) {
+                    unlink($upload_path);
+                }
+            }
+            $stmt->close();
+        } else {
+            set_flash_message('Failed to upload file. Please check folder permissions.', 'error');
+        }
+        
+        redirect("profile.php");
+    } else {
+        $error_msg = 'Please select a photo to upload.';
+        if (isset($_FILES['profile_picture']['error'])) {
+            $error_codes = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds server limit',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds form limit',
+                UPLOAD_ERR_PARTIAL => 'File partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file selected',
+            ];
+            $error_msg = $error_codes[$_FILES['profile_picture']['error']] ?? $error_msg;
+        }
+        set_flash_message($error_msg, 'error');
+        redirect("profile.php");
+    }
     }
     
     // Handle password change
@@ -206,6 +261,10 @@ require_once '../includes/header.php';
     
     .breadcrumb-tenant span {
         color: #94a3b8;
+    }
+
+    .file-input-hidden {
+        display: none;
     }
     
     /* Tenant Profile Header */
@@ -849,16 +908,21 @@ require_once '../includes/header.php';
         <div class="tenant-profile-header">
             <div class="tenant-header-content">
                 <div class="tenant-photo-section">
-                    <?php if ($tenant['profile_photo']): ?>
-                        <img src="../uploads/<?php echo htmlspecialchars($tenant['profile_photo']); ?>" 
-                             alt="Profile Photo" class="tenant-photo-large">
-                    <?php else: ?>
-                        <div class="tenant-photo-placeholder">
-                            <?php echo strtoupper(substr($tenant['first_name'], 0, 1)); ?>
-                        </div>
-                    <?php endif; ?>
-                    <div class="tenant-verified-badge">✓</div>
-                </div>
+    <?php 
+    $profile_pic = $tenant['profile_picture'] ?? null;
+    $pic_path = $profile_pic ? __DIR__ . '/../uploads/' . $profile_pic : null;
+    $pic_exists = $pic_path && file_exists($pic_path);
+    ?>
+    <?php if ($pic_exists): ?>
+        <img src="../uploads/<?php echo htmlspecialchars($profile_pic); ?>" 
+             alt="Profile Photo" class="tenant-photo-large">
+    <?php else: ?>
+        <div class="tenant-photo-placeholder">
+            <?php echo strtoupper(substr($tenant['first_name'], 0, 1)); ?>
+        </div>
+    <?php endif; ?>
+    <div class="tenant-verified-badge">✓</div>
+</div>
                 <div class="tenant-info-section">
                     <h1>
                         <?php echo htmlspecialchars($tenant['first_name'] . ' ' . $tenant['last_name']); ?>
@@ -1033,14 +1097,14 @@ require_once '../includes/header.php';
                             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                             
                             <div class="photo-upload-section">
-                                <?php if ($tenant['profile_photo']): ?>
-                                    <img src="../uploads/<?php echo htmlspecialchars($tenant['profile_photo']); ?>" 
-                                         alt="Current Photo" class="current-photo-display">
-                                <?php else: ?>
-                                    <div class="photo-placeholder-display">
-                                        <?php echo strtoupper(substr($tenant['first_name'], 0, 1)); ?>
-                                    </div>
-                                <?php endif; ?>
+    <?php if ($pic_exists): ?>
+        <img src="../uploads/<?php echo htmlspecialchars($profile_pic); ?>?t=<?php echo time(); ?>" 
+             alt="Current Photo" class="current-photo-display">
+    <?php else: ?>
+        <div class="photo-placeholder-display">
+            <?php echo strtoupper(substr($tenant['first_name'], 0, 1)); ?>
+        </div>
+    <?php endif; ?>
                                 
                                 <div class="upload-instructions">
                                     <h3>Upload New Photo</h3>
@@ -1051,7 +1115,7 @@ require_once '../includes/header.php';
                                     </p>
                                     
                                     <div class="file-input-wrapper">
-                                        <input type="file" name="profile_photo" id="tenant_photo" 
+                                        <input type="file" name="profile_picture" id="tenant_photo" 
                                                class="file-input-hidden" accept="image/*"
                                                onchange="updateTenantFileName(this)">
                                         <label for="tenant_photo" class="file-input-label">
