@@ -83,7 +83,7 @@ require_once 'includes/header.php';
                     <?php echo htmlspecialchars($success); ?>
                 </div>
                 <p class="text-center mt-3">
-                    <a href="login.php" class="btn btn-primary">Go to Login</a>
+                    <a href="<?php echo LOGIN_URL; ?>" class="btn btn-primary">Go to Login</a>
                 </p>
             <?php elseif ($valid_token): ?>
                 <form method="POST" action="" data-validate>
@@ -104,12 +104,12 @@ require_once 'includes/header.php';
                 </form>
             <?php else: ?>
                 <p class="text-center">
-                    <a href="password_reset_request.php" class="btn btn-primary">Request New Reset Link</a>
+                    <a href="<?php echo BASE_URL; ?>/password_reset_request" class="btn btn-primary">Request New Reset Link</a>
                 </p>
             <?php endif; ?>
             
             <p class="text-center mt-3">
-                <a href="login.php">Back to Login</a>
+                <a href="<?php echo LOGIN_URL; ?>">Back to Login</a>
             </p>
         </div>
     </div>

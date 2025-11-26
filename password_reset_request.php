@@ -88,7 +88,7 @@ require_once 'includes/header.php';
             <?php endif; ?>
             
             <p class="text-center mt-3">
-                <a href="login.php">Back to Login</a>
+                <a href="<?php echo LOGIN_URL; ?>">Back to Login</a>
             </p>
         </div>
     </div>

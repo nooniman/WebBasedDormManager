@@ -288,7 +288,7 @@ require_once 'includes/header.php';
                         <label class="form-label" for="login_password">Password</label>
                         <input type="password" id="login_password" name="password" class="form-control" required>
                         <small class="text-right mt-1" style="display: block;">
-                            <a href="password_reset_request.php">Forgot password?</a>
+                            <a href="<?php echo BASE_URL; ?>/password_reset_request">Forgot password?</a>
                         </small>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
@@ -342,7 +342,7 @@ require_once 'includes/header.php';
             </div>
             
             <p class="text-center mt-3">
-                <a href="public/index.php">Back to Home</a>
+                <a href="<?php echo PUBLIC_URL; ?>/index">Back to Home</a>
             </p>
         </div>
     </div>

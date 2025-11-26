@@ -1,11 +1,8 @@
 # Dormitory Management System - Apache Configuration
-# Works for both localhost (XAMPP) and Hostinger production
+# Auto-works on both localhost (XAMPP) and Hostinger - NO CHANGES NEEDED!
 
 # Enable Rewrite Engine
 RewriteEngine On
-
-# RewriteBase for XAMPP subdirectory (comment out on Hostinger root deployment)
-RewriteBase /dormitory-management-system/
 
 # Prevent directory listing
 Options -Indexes
