@@ -4,6 +4,9 @@
 # Enable Rewrite Engine
 RewriteEngine On
 
+# RewriteBase for XAMPP subdirectory (comment out on Hostinger root deployment)
+RewriteBase /dormitory-management-system/
+
 # Prevent directory listing
 Options -Indexes
 
@@ -41,21 +44,6 @@ RewriteRule ^ - [L]
 # Only apply if the .php file exists
 RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^([^\.]+)$ $1.php [NC,L]
-
-# Handle admin section clean URLs
-RewriteCond %{REQUEST_URI} ^/admin/([^\.]+)$
-RewriteCond %{DOCUMENT_ROOT}/admin/$1.php -f
-RewriteRule ^admin/([^\.]+)$ admin/$1.php [NC,L]
-
-# Handle tenant section clean URLs
-RewriteCond %{REQUEST_URI} ^/tenant/([^\.]+)$
-RewriteCond %{DOCUMENT_ROOT}/tenant/$1.php -f
-RewriteRule ^tenant/([^\.]+)$ tenant/$1.php [NC,L]
-
-# Handle public section clean URLs
-RewriteCond %{REQUEST_URI} ^/public/([^\.]+)$
-RewriteCond %{DOCUMENT_ROOT}/public/$1.php -f
-RewriteRule ^public/([^\.]+)$ public/$1.php [NC,L]
 
 # Default index handling
 DirectoryIndex index.php public/index.php

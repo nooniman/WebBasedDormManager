@@ -42,8 +42,8 @@ if (ENVIRONMENT === 'development') {
     define('BASE_URL', '/dormitory-management-system');
     define('SITE_URL', 'http://localhost/dormitory-management-system');
     
-    // Clean URLs disabled on localhost (optional - can enable if .htaccess works)
-    define('CLEAN_URLS', false);
+    // Clean URLs enabled (works with .htaccess RewriteBase)
+    define('CLEAN_URLS', true);
     
 } else {
     // ==========================================
@@ -78,12 +78,12 @@ define('ADMIN_URL', BASE_URL . '/admin');
 define('TENANT_URL', BASE_URL . '/tenant');
 define('PUBLIC_URL', BASE_URL . '/public');
 
-// Auth paths
-define('LOGIN_URL', BASE_URL . '/login.php');
-define('LOGOUT_URL', BASE_URL . '/logout.php');
-define('CALLBACK_URL', SITE_URL . '/callback.php');
+// Auth paths (clean URLs - no .php extension)
+define('LOGIN_URL', BASE_URL . '/login');
+define('LOGOUT_URL', BASE_URL . '/logout');
+define('CALLBACK_URL', SITE_URL . '/callback');
 
-// PayPal callback URLs
+// PayPal callback URLs (keep .php for external callbacks)
 define('PAYPAL_RETURN_URL', SITE_URL . '/tenant/payment_success.php');
 define('PAYPAL_CANCEL_URL', SITE_URL . '/tenant/payment_cancel.php');
 

@@ -41,6 +41,12 @@ function verify_password($password, $hash) {
  */
 function generate_csrf_token() {
     if (session_status() === PHP_SESSION_NONE) {
+        // Set session cookie path for subdirectory
+        if (!defined('BASE_URL')) {
+            require_once __DIR__ . '/../config/environment.php';
+        }
+        $cookie_path = BASE_URL ?: '/';
+        session_set_cookie_params(['path' => $cookie_path]);
         session_start();
     }
     if (empty($_SESSION['csrf_token'])) {
@@ -54,6 +60,12 @@ function generate_csrf_token() {
  */
 function verify_csrf_token($token) {
     if (session_status() === PHP_SESSION_NONE) {
+        // Set session cookie path for subdirectory
+        if (!defined('BASE_URL')) {
+            require_once __DIR__ . '/../config/environment.php';
+        }
+        $cookie_path = BASE_URL ?: '/';
+        session_set_cookie_params(['path' => $cookie_path]);
         session_start();
     }
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
@@ -61,8 +73,19 @@ function verify_csrf_token($token) {
 
 /**
  * Redirect to a specific page
+ * Automatically prepends BASE_URL for relative paths
  */
 function redirect($url) {
+    // Include environment if not already loaded
+    if (!defined('BASE_URL')) {
+        require_once __DIR__ . '/../config/environment.php';
+    }
+    
+    // If URL doesn't start with http/https or /, prepend BASE_URL
+    if (!preg_match('#^(https?://|/)#', $url)) {
+        $url = BASE_URL . '/' . ltrim($url, '/');
+    }
+    
     header("Location: " . $url);
     exit();
 }
@@ -72,6 +95,12 @@ function redirect($url) {
  */
 function is_logged_in() {
     if (session_status() === PHP_SESSION_NONE) {
+        // Set session cookie path for subdirectory
+        if (!defined('BASE_URL')) {
+            require_once __DIR__ . '/../config/environment.php';
+        }
+        $cookie_path = BASE_URL ?: '/';
+        session_set_cookie_params(['path' => $cookie_path]);
         session_start();
     }
     return isset($_SESSION['user_id']);
