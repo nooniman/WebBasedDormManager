@@ -1029,35 +1029,120 @@ require_once '../includes/header.php';
     
     /* Print Styles */
     @media print {
+        /* Hide everything first */
         body * {
-            visibility: hidden;
+            visibility: hidden !important;
         }
         
+        /* Show only the receipt container and its children */
+        #receiptModal,
+        #receiptModal .modal,
         #receiptModal .receipt-container,
         #receiptModal .receipt-container * {
-            visibility: visible;
+            visibility: visible !important;
         }
         
+        /* Reset the modal overlay */
+        #receiptModal.modal-overlay {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: auto !important;
+            background: white !important;
+            display: block !important;
+            opacity: 1 !important;
+            overflow: visible !important;
+        }
+        
+        /* Reset the modal */
+        #receiptModal .modal {
+            position: relative !important;
+            transform: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            max-height: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+        }
+        
+        /* Position the receipt */
         #receiptModal .receipt-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+            position: relative !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 600px !important;
+            margin: 0 auto !important;
+            box-shadow: none !important;
         }
         
+        /* Hide non-printable elements */
         .receipt-footer-section,
-        .modal-close {
+        .modal-close,
+        .modal-header {
             display: none !important;
         }
         
+        /* Preserve colors */
         .receipt-header-section {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            background: #10b981 !important;
         }
         
         .receipt-amount-section {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            background: #ecfdf5 !important;
+            border-color: #a7f3d0 !important;
+        }
+        
+        .receipt-status-badge,
+        .receipt-method-badge {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+        
+        .receipt-status-badge.confirmed {
+            background: rgba(16, 185, 129, 0.15) !important;
+            color: #059669 !important;
+        }
+        
+        .receipt-status-badge.pending {
+            background: rgba(245, 158, 11, 0.15) !important;
+            color: #b45309 !important;
+        }
+        
+        .receipt-method-badge.paypal {
+            background: rgba(0, 112, 186, 0.1) !important;
+            color: #0070ba !important;
+        }
+        
+        .receipt-method-badge.cash {
+            background: rgba(139, 92, 246, 0.1) !important;
+            color: #7c3aed !important;
+        }
+        
+        .receipt-method-badge.bank {
+            background: rgba(59, 130, 246, 0.1) !important;
+            color: #2563eb !important;
+        }
+        
+        .receipt-id-box {
+            background: #f8fafc !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        /* Page settings */
+        @page {
+            size: A4;
+            margin: 20mm;
         }
     }
 </style>
@@ -1647,7 +1732,14 @@ function viewReceipt(payment) {
 
 // Print Receipt
 function printReceipt() {
-    window.print();
+    // Ensure the modal is shown before printing
+    const modal = document.getElementById('receiptModal');
+    modal.classList.add('show');
+    
+    // Small delay to ensure modal is rendered
+    setTimeout(() => {
+        window.print();
+    }, 100);
 }
 
 // Close modal when clicking overlay
