@@ -710,16 +710,7 @@ require_once '../includes/header.php';
                     <div class="filter-card">
                         <h3>🔍 Filter Rooms</h3>
                         
-                        <!-- Room Type -->
-                        <div class="filter-group">
-                            <label class="filter-label">Room Type</label>
-                            <select name="type" class="filter-select">
-                                <option value="all" <?php echo $room_type === 'all' ? 'selected' : ''; ?>>All Types</option>
-                                <option value="single" <?php echo $room_type === 'single' ? 'selected' : ''; ?>>Single</option>
-                                <option value="double" <?php echo $room_type === 'double' ? 'selected' : ''; ?>>Double</option>
-                                <option value="quad" <?php echo $room_type === 'quad' ? 'selected' : ''; ?>>Quad</option>
-                            </select>
-                        </div>
+                        
                         
                         <!-- Price Range -->
                         <div class="filter-group">
