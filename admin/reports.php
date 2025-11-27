@@ -12,6 +12,11 @@ $start_date = $_GET['start_date'] ?? date('Y-m-01');
 $end_date = $_GET['end_date'] ?? date('Y-m-d');
 $report_type = $_GET['report_type'] ?? 'overview';
 
+// Format dates for display
+$start_date_formatted = date('F j, Y', strtotime($start_date));
+$end_date_formatted = date('F j, Y', strtotime($end_date));
+$report_generated = date('F j, Y \a\t g:i A');
+
 // Get occupancy statistics
 $total_rooms_result = $conn->query("SELECT COUNT(*) as count FROM rooms");
 $total_rooms = $total_rooms_result->fetch_assoc()['count'];
@@ -304,13 +309,399 @@ while ($row = $room_type_result->fetch_assoc()) {
         color: #64748b;
     }
     
+    /* PDF Preview Modal */
+    .pdf-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .pdf-modal-overlay.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .pdf-modal {
+        background: white;
+        width: 95%;
+        max-width: 900px;
+        max-height: 90vh;
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .pdf-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .pdf-modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+    
+    .pdf-modal-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .pdf-modal-actions button {
+        padding: 0.6rem 1.25rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+    }
+    
+    .pdf-modal-actions .btn-download {
+        background: white;
+        color: #667eea;
+    }
+    
+    .pdf-modal-actions .btn-download:hover {
+        background: #f0f0f0;
+        transform: translateY(-1px);
+    }
+    
+    .pdf-modal-actions .btn-close {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+    
+    .pdf-modal-actions .btn-close:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .pdf-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+        background: #f1f5f9;
+    }
+    
+    /* PDF Report Styles */
+    .pdf-report {
+        background: white;
+        max-width: 800px;
+        margin: 2rem auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .pdf-page {
+        padding: 40px;
+        background: white;
+        min-height: 1000px;
+        position: relative;
+    }
+    
+    .pdf-header {
+        text-align: center;
+        padding-bottom: 25px;
+        border-bottom: 3px solid #667eea;
+        margin-bottom: 30px;
+    }
+    
+    .pdf-logo {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+    
+    .pdf-title {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.5px;
+    }
+    
+    .pdf-subtitle {
+        font-size: 14px;
+        color: #64748b;
+        margin: 0;
+    }
+    
+    .pdf-meta {
+        display: flex;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        font-size: 13px;
+    }
+    
+    .pdf-meta-item {
+        text-align: center;
+    }
+    
+    .pdf-meta-label {
+        color: #64748b;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 3px;
+    }
+    
+    .pdf-meta-value {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 13px;
+    }
+    
+    .pdf-section {
+        margin-bottom: 30px;
+    }
+    
+    .pdf-section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 15px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .pdf-section-title span {
+        font-size: 18px;
+    }
+    
+    .pdf-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .pdf-kpi-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: 18px 15px;
+        border-radius: 12px;
+        text-align: center;
+        border-left: 4px solid #667eea;
+    }
+    
+    .pdf-kpi-card.success { border-left-color: #10b981; }
+    .pdf-kpi-card.warning { border-left-color: #f59e0b; }
+    .pdf-kpi-card.info { border-left-color: #3b82f6; }
+    
+    .pdf-kpi-value {
+        font-size: 26px;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 4px;
+        line-height: 1;
+    }
+    
+    .pdf-kpi-label {
+        font-size: 11px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .pdf-kpi-sub {
+        font-size: 10px;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+    
+    .pdf-chart-container {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .pdf-chart-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .pdf-chart-canvas {
+        height: 220px;
+        width: 100%;
+    }
+    
+    .pdf-charts-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .pdf-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+    
+    .pdf-table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .pdf-table th:first-child {
+        border-radius: 8px 0 0 0;
+    }
+    
+    .pdf-table th:last-child {
+        border-radius: 0 8px 0 0;
+    }
+    
+    .pdf-table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid #e2e8f0;
+        color: #475569;
+    }
+    
+    .pdf-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .pdf-table tr:nth-child(even) {
+        background: #f8fafc;
+    }
+    
+    .pdf-table .text-right {
+        text-align: right;
+    }
+    
+    .pdf-table .font-bold {
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    .pdf-footer {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #e2e8f0;
+        text-align: center;
+        font-size: 11px;
+        color: #94a3b8;
+    }
+    
+    .pdf-footer strong {
+        color: #64748b;
+    }
+    
+    .pdf-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+    
+    .pdf-badge.success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .pdf-badge.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .pdf-badge.info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .pdf-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+    
+    .pdf-summary-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .pdf-summary-icon {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+    
+    .pdf-summary-value {
+        font-size: 20px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+    
+    .pdf-summary-label {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 3px;
+    }
+    
+    .pdf-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        color: #64748b;
+    }
+    
+    .pdf-loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #e2e8f0;
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
     @media print {
         .report-filters,
         .export-buttons,
         .report-tabs,
         .navbar,
-        .footer {
+        .footer,
+        .page-header-enhanced {
             display: none !important;
+        }
+        
+        .reports-container {
+            padding: 0 !important;
         }
         
         .report-section {
@@ -340,6 +731,18 @@ while ($row = $room_type_result->fetch_assoc()) {
             gap: 1rem;
             align-items: flex-start !important;
         }
+        
+        .pdf-kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .pdf-charts-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .pdf-summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 </style>
 
@@ -352,15 +755,30 @@ while ($row = $room_type_result->fetch_assoc()) {
                 <p class="subtitle">Comprehensive insights and financial reports</p>
             </div>
             <div class="export-buttons">
-                <button onclick="exportToPDF()" class="btn-enhanced primary">
-                    📄 Export PDF
+                <button onclick="openPDFPreview()" class="btn-enhanced primary">
+                    📄 Generate PDF Report
                 </button>
                 <button onclick="exportToExcel()" class="btn-enhanced success">
                     📊 Export Excel
                 </button>
-                <button onclick="window.print()" class="btn-enhanced outline">
-                    🖨️ Print
-                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PDF Preview Modal -->
+<div id="pdfModal" class="pdf-modal-overlay">
+    <div class="pdf-modal">
+        <div class="pdf-modal-header">
+            <h3>📄 Report Preview</h3>
+            <div class="pdf-modal-actions">
+                <button onclick="downloadPDF()" class="btn-download">⬇️ Download PDF</button>
+                <button onclick="closePDFPreview()" class="btn-close">✕ Close</button>
+            </div>
+        </div>
+        <div class="pdf-modal-body">
+            <div id="pdfContent" class="pdf-report">
+                <!-- PDF content will be generated here -->
             </div>
         </div>
     </div>
@@ -896,8 +1314,50 @@ while ($row = $room_type_result->fetch_assoc()) {
 
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
+    // Report Data from PHP
+    const reportData = {
+        dateRange: {
+            start: '<?php echo $start_date_formatted; ?>',
+            end: '<?php echo $end_date_formatted; ?>',
+            generated: '<?php echo $report_generated; ?>'
+        },
+        occupancy: {
+            rate: <?php echo number_format($occupancy_rate, 1); ?>,
+            total: <?php echo $total_rooms; ?>,
+            occupied: <?php echo $occupied_rooms; ?>,
+            available: <?php echo $available_rooms; ?>,
+            maintenance: <?php echo $maintenance_rooms; ?>
+        },
+        revenue: {
+            total: <?php echo $total_revenue['total'] ?? 0; ?>,
+            totalFormatted: '<?php echo format_currency($total_revenue['total'] ?? 0); ?>',
+            transactions: <?php echo $total_revenue['count'] ?? 0; ?>,
+            pending: <?php echo $pending_payments['total'] ?? 0; ?>,
+            pendingFormatted: '<?php echo format_currency($pending_payments['total'] ?? 0); ?>',
+            pendingCount: <?php echo $pending_payments['count'] ?? 0; ?>
+        },
+        monthly: {
+            labels: <?php echo json_encode($revenue_labels); ?>,
+            data: <?php echo json_encode($revenue_data); ?>,
+            details: <?php echo json_encode($monthly_revenue_array); ?>
+        },
+        roomTypes: {
+            labels: <?php echo json_encode($room_types); ?>,
+            data: <?php echo json_encode($room_counts); ?>
+        },
+        paymentMethods: <?php echo json_encode($payment_methods); ?>,
+        topTenants: <?php echo json_encode($top_tenants_array); ?>,
+        paypal: {
+            total: <?php echo $paypal_stats['total'] ?? 0; ?>,
+            completed: <?php echo $paypal_stats['completed'] ?? 0; ?>,
+            pending: <?php echo $paypal_stats['pending'] ?? 0; ?>,
+            failed: <?php echo ($paypal_stats['failed'] ?? 0) + ($paypal_stats['cancelled'] ?? 0); ?>
+        }
+    };
+
     // Tab Switching
     function switchTab(tabName) {
         document.querySelectorAll('.report-section').forEach(section => {
@@ -913,10 +1373,10 @@ while ($row = $room_type_result->fetch_assoc()) {
     }
     
     // Chart Data
-    const revenueLabels = <?php echo json_encode($revenue_labels); ?>;
-    const revenueData = <?php echo json_encode($revenue_data); ?>;
-    const roomTypes = <?php echo json_encode($room_types); ?>;
-    const roomCounts = <?php echo json_encode($room_counts); ?>;
+    const revenueLabels = reportData.monthly.labels;
+    const revenueData = reportData.monthly.data;
+    const roomTypes = reportData.roomTypes.labels;
+    const roomCounts = reportData.roomTypes.data;
     
     // Common Chart Options
     const commonOptions = {
@@ -1025,7 +1485,7 @@ while ($row = $room_type_result->fetch_assoc()) {
         data: {
             labels: ['Confirmed', 'Pending'],
             datasets: [{
-                data: [<?php echo $total_revenue['total'] ?? 0; ?>, <?php echo $pending_payments['total'] ?? 0; ?>],
+                data: [reportData.revenue.total, reportData.revenue.pending],
                 backgroundColor: [
                     'rgba(16, 185, 129, 0.8)',
                     'rgba(245, 158, 11, 0.8)'
@@ -1045,7 +1505,7 @@ while ($row = $room_type_result->fetch_assoc()) {
             labels: ['Occupied', 'Available', 'Maintenance'],
             datasets: [{
                 label: 'Number of Rooms',
-                data: [<?php echo $occupied_rooms; ?>, <?php echo $available_rooms; ?>, <?php echo $maintenance_rooms; ?>],
+                data: [reportData.occupancy.occupied, reportData.occupancy.available, reportData.occupancy.maintenance],
                 backgroundColor: [
                     'rgba(59, 130, 246, 0.8)',
                     'rgba(16, 185, 129, 0.8)',
@@ -1075,7 +1535,7 @@ while ($row = $room_type_result->fetch_assoc()) {
         data: {
             labels: ['Available', 'Occupied', 'Maintenance'],
             datasets: [{
-                data: [<?php echo $available_rooms; ?>, <?php echo $occupied_rooms; ?>, <?php echo $maintenance_rooms; ?>],
+                data: [reportData.occupancy.available, reportData.occupancy.occupied, reportData.occupancy.maintenance],
                 backgroundColor: [
                     'rgba(16, 185, 129, 0.8)',
                     'rgba(59, 130, 246, 0.8)',
@@ -1087,34 +1547,366 @@ while ($row = $room_type_result->fetch_assoc()) {
         },
         options: commonOptions
     });
-    
-    // Export to PDF
-    function exportToPDF() {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-        script.onload = function() {
-            const element = document.querySelector('.reports-container');
-            const opt = {
-                margin: 10,
-                filename: 'dormitory-report-' + new Date().toISOString().split('T')[0] + '.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            
-            // Show loading message
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ Generating PDF...';
-            btn.disabled = true;
-            
-            html2pdf().set(opt).from(element).save().then(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
-        };
-        document.head.appendChild(script);
+
+    // PDF Chart instances
+    let pdfCharts = {};
+
+    // Generate PDF Content
+    function generatePDFContent() {
+        const methodIcons = { paypal: '🅿️', cash: '💵', bank_transfer: '🏦', gcash: '📱' };
+        
+        // Build payment methods HTML
+        let paymentMethodsHTML = '';
+        if (reportData.paymentMethods.length > 0) {
+            paymentMethodsHTML = reportData.paymentMethods.map(m => `
+                <div class="pdf-summary-card">
+                    <div class="pdf-summary-icon">${methodIcons[m.payment_method] || '💳'}</div>
+                    <div class="pdf-summary-value">₱${parseFloat(m.total_amount).toLocaleString()}</div>
+                    <div class="pdf-summary-label">${m.payment_method.replace('_', ' ').toUpperCase()} (${m.transaction_count})</div>
+                </div>
+            `).join('');
+        }
+
+        // Build top tenants HTML
+        let topTenantsHTML = '';
+        if (reportData.topTenants.length > 0) {
+            topTenantsHTML = reportData.topTenants.map((t, i) => `
+                <tr>
+                    <td class="font-bold">${i + 1}. ${t.first_name} ${t.last_name}</td>
+                    <td>${t.email}</td>
+                    <td class="text-right">${t.payment_count}</td>
+                    <td class="text-right font-bold">₱${parseFloat(t.total_paid).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Build monthly revenue table
+        let monthlyTableHTML = '';
+        if (reportData.monthly.details.length > 0) {
+            monthlyTableHTML = reportData.monthly.details.map(m => `
+                <tr>
+                    <td class="font-bold">${m.month_label}</td>
+                    <td class="text-right">${m.transaction_count}</td>
+                    <td class="text-right font-bold">₱${parseFloat(m.total).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        return `
+            <div class="pdf-page">
+                <!-- Header -->
+                <div class="pdf-header">
+                    <div class="pdf-logo">🏠</div>
+                    <h1 class="pdf-title">Dormitory Management Report</h1>
+                    <p class="pdf-subtitle">Comprehensive Financial & Occupancy Analysis</p>
+                </div>
+
+                <!-- Meta Information -->
+                <div class="pdf-meta">
+                    <div class="pdf-meta-item">
+                        <div class="pdf-meta-label">Report Period</div>
+                        <div class="pdf-meta-value">${reportData.dateRange.start} - ${reportData.dateRange.end}</div>
+                    </div>
+                    <div class="pdf-meta-item">
+                        <div class="pdf-meta-label">Generated On</div>
+                        <div class="pdf-meta-value">${reportData.dateRange.generated}</div>
+                    </div>
+                    <div class="pdf-meta-item">
+                        <div class="pdf-meta-label">Report Type</div>
+                        <div class="pdf-meta-value">Full Analytics Report</div>
+                    </div>
+                </div>
+
+                <!-- Key Performance Indicators -->
+                <div class="pdf-section">
+                    <h2 class="pdf-section-title"><span>📊</span> Key Performance Indicators</h2>
+                    <div class="pdf-kpi-grid">
+                        <div class="pdf-kpi-card">
+                            <div class="pdf-kpi-value">${reportData.occupancy.rate}%</div>
+                            <div class="pdf-kpi-label">Occupancy Rate</div>
+                            <div class="pdf-kpi-sub">${reportData.occupancy.occupied}/${reportData.occupancy.total} Rooms</div>
+                        </div>
+                        <div class="pdf-kpi-card success">
+                            <div class="pdf-kpi-value">${reportData.revenue.totalFormatted}</div>
+                            <div class="pdf-kpi-label">Total Revenue</div>
+                            <div class="pdf-kpi-sub">${reportData.revenue.transactions} Transactions</div>
+                        </div>
+                        <div class="pdf-kpi-card warning">
+                            <div class="pdf-kpi-value">${reportData.revenue.pendingCount}</div>
+                            <div class="pdf-kpi-label">Pending Payments</div>
+                            <div class="pdf-kpi-sub">${reportData.revenue.pendingFormatted}</div>
+                        </div>
+                        <div class="pdf-kpi-card info">
+                            <div class="pdf-kpi-value">${reportData.occupancy.available}</div>
+                            <div class="pdf-kpi-label">Available Rooms</div>
+                            <div class="pdf-kpi-sub">${reportData.occupancy.maintenance} In Maintenance</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="pdf-section">
+                    <h2 class="pdf-section-title"><span>📈</span> Revenue & Occupancy Charts</h2>
+                    <div class="pdf-charts-row">
+                        <div class="pdf-chart-container">
+                            <div class="pdf-chart-title">Monthly Revenue Trend</div>
+                            <canvas id="pdfRevenueChart" class="pdf-chart-canvas"></canvas>
+                        </div>
+                        <div class="pdf-chart-container">
+                            <div class="pdf-chart-title">Room Status Distribution</div>
+                            <canvas id="pdfOccupancyChart" class="pdf-chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                ${reportData.paymentMethods.length > 0 ? `
+                <div class="pdf-section">
+                    <h2 class="pdf-section-title"><span>💳</span> Payment Methods Breakdown</h2>
+                    <div class="pdf-summary-grid">
+                        ${paymentMethodsHTML}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Monthly Revenue Table -->
+                ${reportData.monthly.details.length > 0 ? `
+                <div class="pdf-section">
+                    <h2 class="pdf-section-title"><span>📅</span> Monthly Revenue Summary</h2>
+                    <table class="pdf-table">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th class="text-right">Transactions</th>
+                                <th class="text-right">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${monthlyTableHTML}
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
+
+                <!-- Top Tenants -->
+                ${reportData.topTenants.length > 0 ? `
+                <div class="pdf-section">
+                    <h2 class="pdf-section-title"><span>🏆</span> Top Paying Tenants</h2>
+                    <table class="pdf-table">
+                        <thead>
+                            <tr>
+                                <th>Tenant Name</th>
+                                <th>Email</th>
+                                <th class="text-right">Payments</th>
+                                <th class="text-right">Total Paid</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${topTenantsHTML}
+                        </tbody>
+                    </table>
+                </div>
+                ` : ''}
+
+                <!-- Room Summary -->
+                <div class="pdf-section">
+                    <h2 class="pdf-section-title"><span>🏠</span> Room Inventory Summary</h2>
+                    <div class="pdf-summary-grid">
+                        <div class="pdf-summary-card" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);">
+                            <div class="pdf-summary-icon">✅</div>
+                            <div class="pdf-summary-value" style="color: #065f46;">${reportData.occupancy.available}</div>
+                            <div class="pdf-summary-label">Available</div>
+                        </div>
+                        <div class="pdf-summary-card" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">
+                            <div class="pdf-summary-icon">👤</div>
+                            <div class="pdf-summary-value" style="color: #1e40af;">${reportData.occupancy.occupied}</div>
+                            <div class="pdf-summary-label">Occupied</div>
+                        </div>
+                        <div class="pdf-summary-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                            <div class="pdf-summary-icon">🔧</div>
+                            <div class="pdf-summary-value" style="color: #92400e;">${reportData.occupancy.maintenance}</div>
+                            <div class="pdf-summary-label">Maintenance</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="pdf-footer">
+                    <p><strong>Dormitory Management System</strong> — Confidential Report</p>
+                    <p>Generated on ${reportData.dateRange.generated} | Page 1 of 1</p>
+                </div>
+            </div>
+        `;
     }
+
+    // Initialize PDF Charts
+    function initPDFCharts() {
+        // Destroy existing charts if any
+        Object.values(pdfCharts).forEach(chart => chart.destroy());
+        pdfCharts = {};
+
+        // Revenue Chart for PDF
+        const pdfRevenueCtx = document.getElementById('pdfRevenueChart');
+        if (pdfRevenueCtx) {
+            pdfCharts.revenue = new Chart(pdfRevenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: reportData.monthly.labels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: reportData.monthly.data,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgb(102, 126, 234)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '₱' + value.toLocaleString(),
+                                font: { size: 10 }
+                            },
+                            grid: { color: '#e2e8f0' }
+                        },
+                        x: {
+                            ticks: { font: { size: 9 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Occupancy Chart for PDF
+        const pdfOccupancyCtx = document.getElementById('pdfOccupancyChart');
+        if (pdfOccupancyCtx) {
+            pdfCharts.occupancy = new Chart(pdfOccupancyCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Available', 'Occupied', 'Maintenance'],
+                    datasets: [{
+                        data: [reportData.occupancy.available, reportData.occupancy.occupied, reportData.occupancy.maintenance],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: { size: 11, weight: '600' },
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Open PDF Preview
+    function openPDFPreview() {
+        const modal = document.getElementById('pdfModal');
+        const content = document.getElementById('pdfContent');
+        
+        // Show loading
+        content.innerHTML = `
+            <div class="pdf-loading">
+                <div class="pdf-loading-spinner"></div>
+                <p>Generating report preview...</p>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Generate content after a brief delay
+        setTimeout(() => {
+            content.innerHTML = generatePDFContent();
+            // Initialize charts after content is rendered
+            setTimeout(initPDFCharts, 100);
+        }, 300);
+    }
+
+    // Close PDF Preview
+    function closePDFPreview() {
+        const modal = document.getElementById('pdfModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+        
+        // Destroy PDF charts
+        Object.values(pdfCharts).forEach(chart => chart.destroy());
+        pdfCharts = {};
+    }
+
+    // Download PDF
+    function downloadPDF() {
+        const element = document.getElementById('pdfContent');
+        const downloadBtn = document.querySelector('.btn-download');
+        const originalText = downloadBtn.innerHTML;
+        
+        downloadBtn.innerHTML = '⏳ Generating...';
+        downloadBtn.disabled = true;
+        
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: 'dormitory-report-' + new Date().toISOString().split('T')[0] + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                logging: false,
+                useCORS: true,
+                allowTaint: true
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait' 
+            },
+            pagebreak: { mode: 'avoid-all' }
+        };
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+        }).catch(err => {
+            console.error('PDF generation error:', err);
+            downloadBtn.innerHTML = originalText;
+            downloadBtn.disabled = false;
+            alert('Error generating PDF. Please try again.');
+        });
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePDFPreview();
+        }
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('pdfModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePDFPreview();
+        }
+    });
     
     // Export to Excel
     function exportToExcel() {
@@ -1123,11 +1915,63 @@ while ($row = $room_type_result->fetch_assoc()) {
         script.onload = function() {
             const wb = XLSX.utils.book_new();
             
-            // Export all tables
+            // Summary Sheet
+            const summaryData = [
+                ['Dormitory Management Report'],
+                ['Generated: ' + reportData.dateRange.generated],
+                ['Period: ' + reportData.dateRange.start + ' to ' + reportData.dateRange.end],
+                [''],
+                ['KEY METRICS'],
+                ['Occupancy Rate', reportData.occupancy.rate + '%'],
+                ['Total Rooms', reportData.occupancy.total],
+                ['Occupied Rooms', reportData.occupancy.occupied],
+                ['Available Rooms', reportData.occupancy.available],
+                ['Maintenance', reportData.occupancy.maintenance],
+                [''],
+                ['REVENUE'],
+                ['Total Revenue', reportData.revenue.total],
+                ['Transactions', reportData.revenue.transactions],
+                ['Pending Amount', reportData.revenue.pending],
+                ['Pending Count', reportData.revenue.pendingCount]
+            ];
+            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
+            
+            // Monthly Revenue Sheet
+            if (reportData.monthly.details.length > 0) {
+                const monthlyData = [['Month', 'Transactions', 'Total Revenue']];
+                reportData.monthly.details.forEach(m => {
+                    monthlyData.push([m.month_label, m.transaction_count, parseFloat(m.total)]);
+                });
+                const monthlyWs = XLSX.utils.aoa_to_sheet(monthlyData);
+                XLSX.utils.book_append_sheet(wb, monthlyWs, 'Monthly Revenue');
+            }
+            
+            // Top Tenants Sheet
+            if (reportData.topTenants.length > 0) {
+                const tenantsData = [['Rank', 'Name', 'Email', 'Payments', 'Total Paid']];
+                reportData.topTenants.forEach((t, i) => {
+                    tenantsData.push([i + 1, t.first_name + ' ' + t.last_name, t.email, t.payment_count, parseFloat(t.total_paid)]);
+                });
+                const tenantsWs = XLSX.utils.aoa_to_sheet(tenantsData);
+                XLSX.utils.book_append_sheet(wb, tenantsWs, 'Top Tenants');
+            }
+            
+            // Payment Methods Sheet
+            if (reportData.paymentMethods.length > 0) {
+                const methodsData = [['Payment Method', 'Transactions', 'Total Amount']];
+                reportData.paymentMethods.forEach(m => {
+                    methodsData.push([m.payment_method, m.transaction_count, parseFloat(m.total_amount)]);
+                });
+                const methodsWs = XLSX.utils.aoa_to_sheet(methodsData);
+                XLSX.utils.book_append_sheet(wb, methodsWs, 'Payment Methods');
+            }
+            
+            // Export all tables from the page
             const tables = document.querySelectorAll('.table-enhanced');
             tables.forEach((table, index) => {
                 const ws = XLSX.utils.table_to_sheet(table);
-                XLSX.utils.book_append_sheet(wb, ws, 'Sheet' + (index + 1));
+                XLSX.utils.book_append_sheet(wb, ws, 'Data ' + (index + 1));
             });
             
             XLSX.writeFile(wb, 'dormitory-report-' + new Date().toISOString().split('T')[0] + '.xlsx');
