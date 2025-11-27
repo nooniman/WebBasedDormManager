@@ -6,10 +6,12 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 
 ### For Administrators
 - **Modern Dashboard**: Enhanced statistics dashboard with animated cards, charts, and PayPal revenue tracking
-- **Tenant Management**: Comprehensive tenant account management with profile cards and payment summaries
+- **Tenant Management**: Comprehensive tenant management with search, filters, grid/table views, and detailed tenant profiles
+- **Tenant Details**: Detailed tenant view with profile info, booking history, payment history, and account management
 - **Room Management**: Advanced room inventory with photo galleries, amenities, and room creation wizard
 - **Booking Management**: Visual booking calendar with status tracking and conflict detection
-- **Payment Tracking**: Detailed payment monitoring with PayPal transaction history and capture IDs
+- **Payment Tracking**: Detailed payment monitoring with PayPal transaction history, receipt viewing, and capture IDs
+- **Receipt Management**: View and print professional payment receipts with full transaction details
 - **PayPal Analytics**: Track PayPal vs cash payments, view transaction details, and monitor payment trends
 - **Announcements**: Create and publish system-wide announcements
 - **Reports**: Professional reports with tabbed interface, CSV exports, payment analytics, and Chart.js visualizations
@@ -25,6 +27,7 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 - **Multi-Room Payments**: Pay for multiple bookings if tenant has more than one room
 - **Flexible Payment Duration**: Choose payment duration from 1-12 months
 - **Payment History**: Complete transaction records with PayPal transaction IDs and status tracking
+- **Payment Receipts**: Professional receipts after PayPal payments with print-to-PDF support
 - **Profile Management**: Update personal information and profile picture
 - **Announcements**: Stay updated with important notices
 - **SSO Login**: Secure login via Auth0 with social providers
@@ -124,11 +127,12 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 dormitory-management-system/
 ├── admin/                      # Admin panel pages
 │   ├── dashboard.php           # Enhanced dashboard with PayPal stats
-│   ├── tenants.php             # Tenant management with payment summaries
+│   ├── tenants.php             # ✨ Enhanced tenant management with filters & views
+│   ├── tenant_details.php      # ✨ Detailed tenant profile page
 │   ├── rooms.php               # Room inventory management
 │   ├── room_add.php            # ✨ Room creation wizard
 │   ├── room_details.php        # Room details with photo gallery
-│   ├── payments.php            # Payment tracking with PayPal transactions
+│   ├── payments.php            # ✨ Payment tracking with receipts & modals
 │   ├── bookings.php            # Booking management with card view
 │   ├── view_booking.php        # Detailed booking view with PayPal info
 │   ├── edit_booking.php        # Booking edit functionality
@@ -195,7 +199,8 @@ dormitory-management-system/
 ├── PHASE2_SUMMARY.md
 ├── PHASE3_SUMMARY.md
 ├── PHASE4_SUMMARY.md
-└── PHASE5_SUMMARY.md           # ✨ PayPal integration documentation
+├── PHASE5_SUMMARY.md           # PayPal integration documentation
+└── PHASE6_SUMMARY.md           # ✨ UI/UX overhaul documentation
 ```
 
 ## Security Features
@@ -287,7 +292,44 @@ dormitory-management-system/
 - ✅ Payment trend analysis
 - ✅ Visual data representation
 
-## New Features in Phase 5 ✨
+## New Features in Phase 6 ✨
+
+### Enhanced Admin UI/UX
+- ✅ Overhauled payments page with modern card-based stats
+- ✅ Receipt modal with full transaction details
+- ✅ Print-to-PDF receipt functionality
+- ✅ Dual view modes (grid/table) for tenant management
+- ✅ Advanced search and filtering for tenants
+- ✅ Sort options (newest, oldest, name, highest paid)
+- ✅ View toggle with localStorage persistence
+
+### Tenant Details Page
+- ✅ Comprehensive tenant profile view
+- ✅ Stats cards (active bookings, total paid, pending, total bookings)
+- ✅ Personal information section with account status
+- ✅ Booking history with room details and status
+- ✅ Payment history with method badges and receipts
+- ✅ Account activation/deactivation controls
+- ✅ Clean URL support (`/tenant_details?id=X`)
+
+### Receipt System
+- ✅ Professional receipt generation after PayPal payments
+- ✅ Admin receipt viewing for all payments
+- ✅ Print-optimized CSS with color preservation
+- ✅ Receipt details: tenant, room, transaction IDs, amounts
+- ✅ PDF export via browser print dialog
+
+### UI Improvements
+- ✅ Glassmorphism effects on profile headers
+- ✅ Gradient stat cards with icons
+- ✅ Status pills with dot indicators
+- ✅ Payment method badges (PayPal/Cash/Bank)
+- ✅ Animated card hover effects
+- ✅ Responsive grid layouts
+
+---
+
+## New Features in Phase 5
 
 ### PayPal Payment Integration
 - ✅ PayPal Checkout SDK integration (Sandbox & Production)
@@ -358,19 +400,20 @@ dormitory-management-system/
 - [x] Phase 4: Enhanced Booking System ✨ **COMPLETED**
 - [x] Phase 4.5: Single Sign-On using Auth0 ✅
 - [x] Phase 5: Payment Integration (PayPal) ✨ **COMPLETED**
-- [ ] Phase 6: Hostinger Production Deployment - **IN PROGRESS**
-- [ ] Phase 7: Email Notifications (SMTP integration)
-- [ ] Phase 8: Maintenance Request System
-- [ ] Phase 9: Testing & Security Hardening
-- [ ] Phase 10: Advanced Features (2FA, receipts, etc.)
+- [x] Phase 6: UI/UX Overhaul & Receipt System ✨ **COMPLETED**
+- [ ] Phase 7: Hostinger Production Deployment - **IN PROGRESS**
+- [ ] Phase 8: Email Notifications (SMTP integration)
+- [ ] Phase 9: Maintenance Request System
+- [ ] Phase 10: Testing & Security Hardening
+- [ ] Phase 11: Advanced Features (2FA, etc.)
 
 ## Project Statistics
 
 ### Overall Progress
-- **Total Files**: 55+
-- **Total Lines of Code**: 12,000+
+- **Total Files**: 57+
+- **Total Lines of Code**: 14,000+
 - **Database Tables**: 14
-- **Admin Pages**: 13
+- **Admin Pages**: 14
 - **Tenant Pages**: 9
 - **Public Pages**: 4
 - **External Integrations**: 2 (Auth0, PayPal)
@@ -382,8 +425,9 @@ dormitory-management-system/
 - ✅ Phase 3: Complete (November 2025)
 - ✅ Phase 4: Complete (November 2025)
 - ✅ Phase 4.5: Complete (November 2025)
-- ✅ Phase 5: Complete (November 2025) ✨ **NEW**
-- ⏳ Phase 6: In Progress
+- ✅ Phase 5: Complete (November 2025)
+- ✅ Phase 6: Complete (November 2025) ✨ **NEW**
+- ⏳ Phase 7: In Progress
 
 ## Design System
 
@@ -526,4 +570,4 @@ For support and questions, please contact the system administrator.
 
 **Last Updated**: November 27, 2025
 
-**Status**: ✅ Phase 1, 2, 3, 4, 4.5, 5 Complete - Phase 6 (Hostinger Deployment) In Progress
+**Status**: ✅ Phase 1, 2, 3, 4, 4.5, 5, 6 Complete - Phase 7 (Hostinger Deployment) In Progress
