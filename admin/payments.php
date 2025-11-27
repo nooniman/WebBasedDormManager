@@ -823,6 +823,243 @@ require_once '../includes/header.php';
             grid-template-columns: repeat(2, 1fr);
         }
     }
+    
+    /* Receipt Modal Styles */
+    .modal.modal-lg {
+        max-width: 600px;
+    }
+    
+    .receipt-container {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .receipt-header-section {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .receipt-header-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .receipt-logo {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .receipt-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
+    
+    .receipt-subtitle {
+        opacity: 0.9;
+        margin-top: 0.25rem;
+    }
+    
+    .receipt-body-section {
+        padding: 1.5rem;
+    }
+    
+    .receipt-id-box {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        border: 1px dashed #cbd5e1;
+        text-align: center;
+    }
+    
+    .receipt-id-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+    }
+    
+    .receipt-id-value {
+        font-family: monospace;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    .receipt-amount-section {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        border: 2px solid #a7f3d0;
+        text-align: center;
+    }
+    
+    .receipt-amount-label {
+        font-size: 0.85rem;
+        color: #047857;
+        margin-bottom: 0.25rem;
+    }
+    
+    .receipt-amount-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #059669;
+    }
+    
+    .receipt-details-section {
+        margin-bottom: 1rem;
+    }
+    
+    .receipt-section-title {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #94a3b8;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        font-size: 0.9rem;
+    }
+    
+    .receipt-row .label {
+        color: #64748b;
+    }
+    
+    .receipt-row .value {
+        font-weight: 600;
+        color: #1e293b;
+        text-align: right;
+    }
+    
+    .receipt-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+        margin: 1rem 0;
+    }
+    
+    .receipt-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .receipt-status-badge.confirmed {
+        background: rgba(16, 185, 129, 0.15);
+        color: #059669;
+    }
+    
+    .receipt-status-badge.pending {
+        background: rgba(245, 158, 11, 0.15);
+        color: #b45309;
+    }
+    
+    .receipt-status-badge.failed {
+        background: rgba(239, 68, 68, 0.15);
+        color: #b91c1c;
+    }
+    
+    .receipt-method-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .receipt-method-badge.paypal {
+        background: rgba(0, 112, 186, 0.1);
+        color: #0070ba;
+    }
+    
+    .receipt-method-badge.cash {
+        background: rgba(139, 92, 246, 0.1);
+        color: #7c3aed;
+    }
+    
+    .receipt-method-badge.bank {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+    }
+    
+    .receipt-footer-section {
+        background: #f8fafc;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-print {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        color: white;
+    }
+    
+    .btn-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
+    }
+    
+    /* Print Styles */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        
+        #receiptModal .receipt-container,
+        #receiptModal .receipt-container * {
+            visibility: visible;
+        }
+        
+        #receiptModal .receipt-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        
+        .receipt-footer-section,
+        .modal-close {
+            display: none !important;
+        }
+        
+        .receipt-header-section {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .receipt-amount-section {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
 </style>
 
 <div class="container payments-page">
@@ -905,15 +1142,11 @@ require_once '../includes/header.php';
                 
                 <div class="filter-group">
                     <label>Search</label>
-                    <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
-                           placeholder="Name, room, or transaction ID...">
+                    <input type="text" name="search" placeholder="Search tenant, room, transaction..." value="<?php echo htmlspecialchars($search); ?>">
                 </div>
                 
                 <div class="filter-group">
-                    <label>&nbsp;</label>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        🔍 Search
-                    </button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">🔍 Search</button>
                 </div>
             </div>
         </form>
@@ -922,12 +1155,12 @@ require_once '../includes/header.php';
     <!-- Tabs -->
     <div class="tabs-container">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('payments')">All Payments</button>
-            <button class="tab-btn" onclick="switchTab('paypal')">PayPal Transactions</button>
+            <button class="tab-btn active" onclick="switchTab('payments', this)">💳 All Payments</button>
+            <button class="tab-btn" onclick="switchTab('paypal', this)">🅿️ PayPal Transactions</button>
         </div>
     </div>
     
-    <!-- All Payments Tab -->
+    <!-- Payments Tab -->
     <div id="payments-tab" class="tab-content active">
         <div class="table-container">
             <?php if ($payments_result && $payments_result->num_rows > 0): ?>
@@ -939,7 +1172,6 @@ require_once '../includes/header.php';
                             <th>Amount</th>
                             <th>Period</th>
                             <th>Method</th>
-                            <th>Transaction ID</th>
                             <th>Status</th>
                             <th>Date</th>
                             <th>Actions</th>
@@ -951,69 +1183,60 @@ require_once '../includes/header.php';
                                 <td>
                                     <div class="tenant-info">
                                         <div class="tenant-avatar">
-                                            <?php echo strtoupper(substr($payment['first_name'] ?? 'U', 0, 1)); ?>
+                                            <?php echo strtoupper(substr($payment['first_name'] ?? 'U', 0, 1) . substr($payment['last_name'] ?? 'N', 0, 1)); ?>
                                         </div>
                                         <div class="tenant-details">
-                                            <h4><?php echo htmlspecialchars(($payment['first_name'] ?? '') . ' ' . ($payment['last_name'] ?? '')); ?></h4>
-                                            <span><?php echo htmlspecialchars($payment['email'] ?? 'N/A'); ?></span>
+                                            <h4><?php echo htmlspecialchars(($payment['first_name'] ?? 'Unknown') . ' ' . ($payment['last_name'] ?? '')); ?></h4>
+                                            <span><?php echo htmlspecialchars($payment['email'] ?? ''); ?></span>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="room-badge">
-                                        🏠 <?php echo htmlspecialchars($payment['room_number'] ?? 'N/A'); ?>
-                                    </span>
+                                    <span class="room-badge">🚪 <?php echo htmlspecialchars($payment['room_number'] ?? 'N/A'); ?></span>
                                 </td>
                                 <td>
                                     <span class="amount"><?php echo format_currency($payment['amount']); ?></span>
                                 </td>
-                                <td><?php echo htmlspecialchars($payment['payment_period'] ?? '-'); ?></td>
+                                <td><?php echo htmlspecialchars($payment['payment_period'] ?? 'N/A'); ?></td>
                                 <td>
-                                    <?php 
-                                    $method = $payment['payment_method'] ?? 'cash';
-                                    $method_icons = ['paypal' => '🅿️', 'cash' => '💵', 'bank' => '🏦'];
-                                    ?>
-                                    <span class="method-badge <?php echo $method; ?>">
-                                        <?php echo $method_icons[$method] ?? '💳'; ?>
-                                        <?php echo ucfirst($method); ?>
+                                    <span class="method-badge <?php echo $payment['payment_method']; ?>">
+                                        <?php 
+                                        $method_icons = ['paypal' => '🅿️', 'cash' => '💵', 'bank' => '🏦'];
+                                        echo ($method_icons[$payment['payment_method']] ?? '💳') . ' ' . ucfirst($payment['payment_method']);
+                                        ?>
                                     </span>
-                                </td>
-                                <td>
-                                    <?php if ($payment['paypal_capture_id']): ?>
-                                        <span class="transaction-id" title="<?php echo htmlspecialchars($payment['paypal_capture_id']); ?>">
-                                            <?php echo htmlspecialchars($payment['paypal_capture_id']); ?>
-                                        </span>
-                                    <?php elseif ($payment['paypal_transaction_id']): ?>
-                                        <span class="transaction-id" title="<?php echo htmlspecialchars($payment['paypal_transaction_id']); ?>">
-                                            <?php echo htmlspecialchars($payment['paypal_transaction_id']); ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span style="color: #94a3b8;">-</span>
-                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <span class="status-badge <?php echo $payment['status']; ?>">
                                         <?php echo ucfirst($payment['status']); ?>
                                     </span>
                                 </td>
-                                <td>
-                                    <?php echo date('M d, Y', strtotime($payment['payment_date'])); ?><br>
-                                    <small style="color: #94a3b8;"><?php echo date('h:i A', strtotime($payment['payment_date'])); ?></small>
-                                </td>
+                                <td><?php echo date('M j, Y', strtotime($payment['payment_date'])); ?></td>
                                 <td>
                                     <div class="action-dropdown">
-                                        <button class="action-btn" onclick="toggleDropdown(this)">⋮</button>
+                                        <button class="action-btn" onclick="toggleDropdown(this)">⋯</button>
                                         <div class="dropdown-menu">
-                                            <button class="dropdown-item" onclick="openStatusModal(<?php echo $payment['id']; ?>, '<?php echo $payment['status']; ?>')">
-                                                ✏️ Update Status
-                                            </button>
-                                            <button class="dropdown-item" onclick="viewPaymentDetails(<?php echo $payment['id']; ?>)">
-                                                👁️ View Details
-                                            </button>
-                                            <?php if ($payment['status'] === 'confirmed'): ?>
-                                                <button class="dropdown-item">
-                                                    📄 Generate Receipt
-                                                </button>
+                                            <button class="dropdown-item" onclick="viewReceipt(<?php echo htmlspecialchars(json_encode([
+                                                'id' => $payment['id'],
+                                                'tenant_name' => ($payment['first_name'] ?? 'Unknown') . ' ' . ($payment['last_name'] ?? ''),
+                                                'tenant_email' => $payment['email'] ?? '',
+                                                'room_number' => $payment['room_number'] ?? 'N/A',
+                                                'room_type' => $payment['room_type'] ?? 'N/A',
+                                                'amount' => $payment['amount'],
+                                                'period' => $payment['payment_period'] ?? 'N/A',
+                                                'method' => $payment['payment_method'],
+                                                'status' => $payment['status'],
+                                                'date' => date('F j, Y', strtotime($payment['payment_date'])),
+                                                'time' => date('g:i A', strtotime($payment['payment_date'])),
+                                                'transaction_id' => $payment['paypal_transaction_id'] ?? '',
+                                                'capture_id' => $payment['paypal_capture_id'] ?? '',
+                                                'notes' => $payment['notes'] ?? ''
+                                            ])); ?>)">🧾 View Receipt</button>
+                                            <button class="dropdown-item" onclick="openStatusModal(<?php echo $payment['id']; ?>, '<?php echo $payment['status']; ?>')">✏️ Update Status</button>
+                                            <?php if ($payment['paypal_transaction_id']): ?>
+                                                <span class="dropdown-item" style="cursor: default; color: #94a3b8;">
+                                                    <span class="transaction-id"><?php echo htmlspecialchars($payment['paypal_transaction_id']); ?></span>
+                                                </span>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -1025,8 +1248,8 @@ require_once '../includes/header.php';
             <?php else: ?>
                 <div class="empty-state">
                     <div class="empty-icon">💳</div>
-                    <h3>No Payments Found</h3>
-                    <p>No payment records match your current filters.</p>
+                    <h3>No payments found</h3>
+                    <p>Try adjusting your filters or record a new payment.</p>
                 </div>
             <?php endif; ?>
         </div>
@@ -1042,9 +1265,7 @@ require_once '../includes/header.php';
                             <th>Tenant</th>
                             <th>Room</th>
                             <th>Amount</th>
-                            <th>PayPal Order ID</th>
-                            <th>Capture ID</th>
-                            <th>Payer Email</th>
+                            <th>Order ID</th>
                             <th>Status</th>
                             <th>Created</th>
                         </tr>
@@ -1055,46 +1276,29 @@ require_once '../includes/header.php';
                                 <td>
                                     <div class="tenant-info">
                                         <div class="tenant-avatar" style="background: linear-gradient(135deg, #0070ba 0%, #003087 100%);">
-                                            <?php echo strtoupper(substr($txn['first_name'] ?? 'U', 0, 1)); ?>
+                                            <?php echo strtoupper(substr($txn['first_name'] ?? 'U', 0, 1) . substr($txn['last_name'] ?? 'N', 0, 1)); ?>
                                         </div>
                                         <div class="tenant-details">
-                                            <h4><?php echo htmlspecialchars(($txn['first_name'] ?? '') . ' ' . ($txn['last_name'] ?? '')); ?></h4>
+                                            <h4><?php echo htmlspecialchars(($txn['first_name'] ?? 'Unknown') . ' ' . ($txn['last_name'] ?? '')); ?></h4>
+                                            <span><?php echo htmlspecialchars($txn['payer_email'] ?? ''); ?></span>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="room-badge">
-                                        🏠 <?php echo htmlspecialchars($txn['room_number'] ?? 'N/A'); ?>
-                                    </span>
+                                    <span class="room-badge">🚪 <?php echo htmlspecialchars($txn['room_number'] ?? 'N/A'); ?></span>
                                 </td>
                                 <td>
                                     <span class="amount"><?php echo format_currency($txn['amount']); ?></span>
                                 </td>
                                 <td>
-                                    <span class="transaction-id" title="<?php echo htmlspecialchars($txn['paypal_order_id']); ?>">
-                                        <?php echo htmlspecialchars($txn['paypal_order_id']); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <?php if ($txn['capture_id']): ?>
-                                        <span class="transaction-id" title="<?php echo htmlspecialchars($txn['capture_id']); ?>">
-                                            <?php echo htmlspecialchars($txn['capture_id']); ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span style="color: #94a3b8;">-</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php echo htmlspecialchars($txn['payer_email'] ?? '-'); ?>
+                                    <span class="transaction-id"><?php echo htmlspecialchars($txn['paypal_order_id']); ?></span>
                                 </td>
                                 <td>
                                     <span class="status-badge <?php echo $txn['status']; ?>">
                                         <?php echo ucfirst($txn['status']); ?>
                                     </span>
                                 </td>
-                                <td>
-                                    <?php echo date('M d, Y h:i A', strtotime($txn['created_at'])); ?>
-                                </td>
+                                <td><?php echo date('M j, Y g:i A', strtotime($txn['created_at'])); ?></td>
                             </tr>
                         <?php endwhile; ?>
                     </tbody>
@@ -1102,13 +1306,14 @@ require_once '../includes/header.php';
             <?php else: ?>
                 <div class="empty-state">
                     <div class="empty-icon">🅿️</div>
-                    <h3>No PayPal Transactions</h3>
-                    <p>No PayPal transactions have been recorded yet.</p>
+                    <h3>No PayPal transactions</h3>
+                    <p>PayPal transactions will appear here once tenants make payments.</p>
                 </div>
             <?php endif; ?>
         </div>
     </div>
 </div>
+
 
 <!-- Record Payment Modal -->
 <div id="recordPaymentModal" class="modal-overlay">
@@ -1202,13 +1407,128 @@ require_once '../includes/header.php';
     </div>
 </div>
 
+<!-- Receipt Modal -->
+<div id="receiptModal" class="modal-overlay">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3>🧾 Payment Receipt</h3>
+            <button class="modal-close" onclick="closeModal('receiptModal')">&times;</button>
+        </div>
+        <div class="receipt-container" id="receiptContent">
+            <!-- Receipt Header -->
+            <div class="receipt-header-section">
+                <div class="receipt-logo">🏠</div>
+                <h2 class="receipt-title">Dormitory Management</h2>
+                <p class="receipt-subtitle">Official Payment Receipt</p>
+            </div>
+            
+            <!-- Receipt Body -->
+            <div class="receipt-body-section">
+                <!-- Receipt ID -->
+                <div class="receipt-id-box">
+                    <div class="receipt-id-label">Receipt Number</div>
+                    <div class="receipt-id-value" id="receipt-id">RCP-00000000</div>
+                </div>
+                
+                <!-- Amount Box -->
+                <div class="receipt-amount-section">
+                    <div class="receipt-amount-label">Amount Paid</div>
+                    <div class="receipt-amount-value" id="receipt-amount">₱0.00</div>
+                </div>
+                
+                <!-- Payment Details -->
+                <div class="receipt-details-section">
+                    <div class="receipt-section-title">Payment Information</div>
+                    <div class="receipt-row">
+                        <span class="label">Date</span>
+                        <span class="value" id="receipt-date">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="label">Time</span>
+                        <span class="value" id="receipt-time">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="label">Payment Period</span>
+                        <span class="value" id="receipt-period">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="label">Status</span>
+                        <span class="value" id="receipt-status">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="label">Method</span>
+                        <span class="value" id="receipt-method">-</span>
+                    </div>
+                </div>
+                
+                <div class="receipt-divider"></div>
+                
+                <div class="receipt-details-section">
+                    <div class="receipt-section-title">Room Details</div>
+                    <div class="receipt-row">
+                        <span class="label">Room Number</span>
+                        <span class="value" id="receipt-room">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="label">Room Type</span>
+                        <span class="value" id="receipt-room-type">-</span>
+                    </div>
+                </div>
+                
+                <div class="receipt-divider"></div>
+                
+                <div class="receipt-details-section">
+                    <div class="receipt-section-title">Tenant Information</div>
+                    <div class="receipt-row">
+                        <span class="label">Name</span>
+                        <span class="value" id="receipt-tenant-name">-</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="label">Email</span>
+                        <span class="value" id="receipt-tenant-email">-</span>
+                    </div>
+                </div>
+                
+                <div id="receipt-transaction-section" style="display: none;">
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-details-section">
+                        <div class="receipt-section-title">Transaction Details</div>
+                        <div class="receipt-row" id="receipt-txn-row">
+                            <span class="label">Transaction ID</span>
+                            <span class="value" id="receipt-transaction-id" style="font-family: monospace; font-size: 0.85rem;">-</span>
+                        </div>
+                        <div class="receipt-row" id="receipt-capture-row" style="display: none;">
+                            <span class="label">Capture ID</span>
+                            <span class="value" id="receipt-capture-id" style="font-family: monospace; font-size: 0.85rem;">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="receipt-notes-section" style="display: none;">
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-details-section">
+                        <div class="receipt-section-title">Notes</div>
+                        <p id="receipt-notes" style="color: #64748b; font-size: 0.9rem; margin: 0;">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Receipt Footer -->
+            <div class="receipt-footer-section">
+                <button onclick="printReceipt()" class="btn btn-print">🖨️ Print Receipt</button>
+                <button onclick="closeModal('receiptModal')" class="btn btn-outline">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // Tab switching
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     
-    event.target.classList.add('active');
+    btn.classList.add('active');
     document.getElementById(tab + '-tab').classList.add('active');
 }
 
@@ -1262,9 +1582,72 @@ function openStatusModal(paymentId, currentStatus) {
     openModal('statusModal');
 }
 
-// View payment details (placeholder)
-function viewPaymentDetails(paymentId) {
-    alert('Payment details for ID: ' + paymentId + '\n(Full modal can be implemented)');
+// Format currency
+function formatCurrency(amount) {
+    return '₱' + parseFloat(amount).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+// View Receipt
+function viewReceipt(payment) {
+    // Populate receipt fields
+    document.getElementById('receipt-id').textContent = 'RCP-' + String(payment.id).padStart(8, '0');
+    document.getElementById('receipt-amount').textContent = formatCurrency(payment.amount);
+    document.getElementById('receipt-date').textContent = payment.date;
+    document.getElementById('receipt-time').textContent = payment.time;
+    document.getElementById('receipt-period').textContent = payment.period;
+    
+    // Status badge
+    const statusBadgeClass = payment.status === 'confirmed' ? 'confirmed' : 
+                             payment.status === 'pending' ? 'pending' : 'failed';
+    document.getElementById('receipt-status').innerHTML = 
+        `<span class="receipt-status-badge ${statusBadgeClass}">✓ ${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}</span>`;
+    
+    // Method badge
+    const methodIcons = { paypal: '🅿️', cash: '💵', bank: '🏦' };
+    const methodIcon = methodIcons[payment.method] || '💳';
+    document.getElementById('receipt-method').innerHTML = 
+        `<span class="receipt-method-badge ${payment.method}">${methodIcon} ${payment.method.charAt(0).toUpperCase() + payment.method.slice(1)}</span>`;
+    
+    // Room details
+    document.getElementById('receipt-room').textContent = payment.room_number;
+    document.getElementById('receipt-room-type').textContent = payment.room_type.charAt(0).toUpperCase() + payment.room_type.slice(1);
+    
+    // Tenant info
+    document.getElementById('receipt-tenant-name').textContent = payment.tenant_name;
+    document.getElementById('receipt-tenant-email').textContent = payment.tenant_email || '-';
+    
+    // Transaction details (for PayPal)
+    if (payment.transaction_id) {
+        document.getElementById('receipt-transaction-section').style.display = 'block';
+        document.getElementById('receipt-transaction-id').textContent = payment.transaction_id;
+        
+        if (payment.capture_id) {
+            document.getElementById('receipt-capture-row').style.display = 'flex';
+            document.getElementById('receipt-capture-id').textContent = payment.capture_id;
+        } else {
+            document.getElementById('receipt-capture-row').style.display = 'none';
+        }
+    } else {
+        document.getElementById('receipt-transaction-section').style.display = 'none';
+    }
+    
+    // Notes
+    if (payment.notes) {
+        document.getElementById('receipt-notes-section').style.display = 'block';
+        document.getElementById('receipt-notes').textContent = payment.notes;
+    } else {
+        document.getElementById('receipt-notes-section').style.display = 'none';
+    }
+    
+    openModal('receiptModal');
+}
+
+// Print Receipt
+function printReceipt() {
+    window.print();
 }
 
 // Close modal when clicking overlay
