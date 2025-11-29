@@ -178,12 +178,14 @@ $stats = $conn->query($stats_query)->fetch_assoc();
 
 // Fetch bookings
 $query = "
-    SELECT b.*, r.room_number, r.room_type, r.price, r.floor_number, u.first_name, u.last_name, u.email, u.phone,
-           admin.first_name as approved_by_name, admin.last_name as approved_by_lastname
+    SELECT b.*, r.room_number, r.room_type, r.price, r.floor_number, r.is_bedspace, u.first_name, u.last_name, u.email, u.phone,
+           admin.first_name as approved_by_name, admin.last_name as approved_by_lastname,
+           bs.bedspace_number
     FROM bookings b 
     JOIN rooms r ON b.room_id = r.id 
     JOIN users u ON b.tenant_id = u.id 
     LEFT JOIN users admin ON b.approved_by = admin.id
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     $where_sql
     ORDER BY 
         CASE 

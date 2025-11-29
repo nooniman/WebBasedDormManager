@@ -97,10 +97,14 @@ $where_sql = count($where_clauses) > 0 ? 'WHERE ' . implode(' AND ', $where_clau
 $query = "
     SELECT p.*, 
            u.first_name, u.last_name, u.email,
-           r.room_number, r.room_type
+           r.room_number, r.room_type, r.is_bedspace, r.price_per_bedspace,
+           bs.bedspace_number,
+           b.is_bedspace_booking
     FROM payments p
     LEFT JOIN users u ON p.tenant_id = u.id
     LEFT JOIN rooms r ON p.room_id = r.id
+    LEFT JOIN bedspaces bs ON p.bedspace_id = bs.id
+    LEFT JOIN bookings b ON p.booking_id = b.id
     $where_sql
     ORDER BY p.payment_date DESC, p.id DESC
 ";
@@ -149,10 +153,13 @@ $paypal_transactions = $conn->query($paypal_transactions_query);
 
 // Get tenants with active bookings for manual payment form
 $tenants_query = "
-    SELECT DISTINCT u.id, u.first_name, u.last_name, b.room_id, r.room_number, r.price
+    SELECT DISTINCT u.id, u.first_name, u.last_name, b.room_id, b.is_bedspace_booking, b.bedspace_id,
+           r.room_number, r.price, r.is_bedspace, r.price_per_bedspace,
+           bs.bedspace_number
     FROM users u
     JOIN bookings b ON u.id = b.tenant_id
     JOIN rooms r ON b.room_id = r.id
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     WHERE b.status IN ('approved', 'checked_in')
     ORDER BY u.last_name, u.first_name
 ";
@@ -1277,7 +1284,13 @@ require_once '../includes/header.php';
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="room-badge">🚪 <?php echo htmlspecialchars($payment['room_number'] ?? 'N/A'); ?></span>
+                                    <?php if ($payment['bedspace_number']): ?>
+                                        <span class="room-badge" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #38bdf8;">
+                                            🛏️ Room <?php echo htmlspecialchars($payment['room_number']); ?> Bed <?php echo htmlspecialchars($payment['bedspace_number']); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="room-badge">🚪 Room <?php echo htmlspecialchars($payment['room_number'] ?? 'N/A'); ?></span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <span class="amount"><?php echo format_currency($payment['amount']); ?></span>
@@ -1306,6 +1319,8 @@ require_once '../includes/header.php';
                                                 'tenant_name' => ($payment['first_name'] ?? 'Unknown') . ' ' . ($payment['last_name'] ?? ''),
                                                 'tenant_email' => $payment['email'] ?? '',
                                                 'room_number' => $payment['room_number'] ?? 'N/A',
+                                                'bedspace_number' => $payment['bedspace_number'] ?? '',
+                                                'is_bedspace' => !empty($payment['bedspace_number']),
                                                 'room_type' => $payment['room_type'] ?? 'N/A',
                                                 'amount' => $payment['amount'],
                                                 'period' => $payment['payment_period'] ?? 'N/A',
@@ -1417,13 +1432,19 @@ require_once '../includes/header.php';
                         <?php 
                         $tenants_result->data_seek(0);
                         while ($tenant = $tenants_result->fetch_assoc()): 
+                            $display_price = $tenant['is_bedspace_booking'] && $tenant['price_per_bedspace'] 
+                                ? $tenant['price_per_bedspace'] 
+                                : $tenant['price'];
+                            $room_label = $tenant['is_bedspace_booking'] && $tenant['bedspace_number']
+                                ? "Room {$tenant['room_number']} Bed {$tenant['bedspace_number']}"
+                                : "Room {$tenant['room_number']}";
                         ?>
                             <option value="<?php echo $tenant['id']; ?>" 
                                     data-room-id="<?php echo $tenant['room_id']; ?>"
-                                    data-room="<?php echo htmlspecialchars($tenant['room_number']); ?>"
-                                    data-price="<?php echo $tenant['price']; ?>">
+                                    data-room="<?php echo htmlspecialchars($room_label); ?>"
+                                    data-price="<?php echo $display_price; ?>">
                                 <?php echo htmlspecialchars($tenant['first_name'] . ' ' . $tenant['last_name']); ?> 
-                                - Room <?php echo htmlspecialchars($tenant['room_number']); ?>
+                                - <?php echo htmlspecialchars($room_label); ?>
                             </option>
                         <?php endwhile; ?>
                     </select>
@@ -1549,9 +1570,9 @@ require_once '../includes/header.php';
                 <div class="receipt-divider"></div>
                 
                 <div class="receipt-details-section">
-                    <div class="receipt-section-title">Room Details</div>
+                    <div class="receipt-section-title" id="receipt-room-section-title">Room Details</div>
                     <div class="receipt-row">
-                        <span class="label">Room Number</span>
+                        <span class="label" id="receipt-room-label">Room Number</span>
                         <span class="value" id="receipt-room">-</span>
                     </div>
                     <div class="receipt-row">
@@ -1697,7 +1718,15 @@ function viewReceipt(payment) {
         `<span class="receipt-method-badge ${payment.method}">${methodIcon} ${payment.method.charAt(0).toUpperCase() + payment.method.slice(1)}</span>`;
     
     // Room details
-    document.getElementById('receipt-room').textContent = payment.room_number;
+    if (payment.is_bedspace && payment.bedspace_number) {
+        document.getElementById('receipt-room-section-title').textContent = 'Bedspace Details';
+        document.getElementById('receipt-room-label').textContent = 'Room & Bedspace';
+        document.getElementById('receipt-room').textContent = 'Room ' + payment.room_number + ' Bed ' + payment.bedspace_number;
+    } else {
+        document.getElementById('receipt-room-section-title').textContent = 'Room Details';
+        document.getElementById('receipt-room-label').textContent = 'Room Number';
+        document.getElementById('receipt-room').textContent = payment.room_number;
+    }
     document.getElementById('receipt-room-type').textContent = payment.room_type.charAt(0).toUpperCase() + payment.room_type.slice(1);
     
     // Tenant info

@@ -12,7 +12,11 @@ $room_id = intval($_GET['id']);
 
 // Get room details with photos
 $room_query = "
-    SELECT r.*
+    SELECT r.*,
+           CASE 
+               WHEN r.is_bedspace = 1 THEN (r.total_bedspaces - r.occupied_bedspaces)
+               ELSE NULL 
+           END as available_bedspaces
     FROM rooms r 
     WHERE r.id = ?
 ";
@@ -753,9 +757,14 @@ require_once '../includes/header.php';
                     </div>
                     
                     <div class="price-section">
-                        <div class="price-label">Monthly Rent</div>
-                        <div class="price-amount-large">₱<?php echo number_format($room['price'], 0); ?></div>
-                        <div class="price-period-large">per month</div>
+                        <div class="price-label"><?php echo $room['is_bedspace'] ? 'Per Bedspace' : 'Monthly Rent'; ?></div>
+                        <div class="price-amount-large">₱<?php echo number_format($room['is_bedspace'] ? $room['price_per_bedspace'] : $room['price'], 0); ?></div>
+                        <div class="price-period-large">per <?php echo $room['is_bedspace'] ? 'bed/month' : 'month'; ?></div>
+                        <?php if ($room['is_bedspace']): ?>
+                            <div style="margin-top: 1rem; padding: 0.75rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 12px; text-align: center; font-weight: 700;">
+                                🛏️ <?php echo $room['available_bedspaces']; ?>/<?php echo $room['total_bedspaces']; ?> Bedspaces Available
+                            </div>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="room-features-detail">
@@ -763,10 +772,21 @@ require_once '../includes/header.php';
                             🔑 Key Features
                         </h3>
                         <div class="features-detail-list">
-                            <div class="feature-detail-item">
-                                <span class="icon">👥</span>
-                                <span>Up to <?php echo $room['capacity']; ?> person(s)</span>
-                            </div>
+                            <?php if ($room['is_bedspace']): ?>
+                                <div class="feature-detail-item">
+                                    <span class="icon">🛏️</span>
+                                    <span>Bedspacing Room (<?php echo $room['total_bedspaces']; ?> beds total)</span>
+                                </div>
+                                <div class="feature-detail-item">
+                                    <span class="icon">✅</span>
+                                    <span><?php echo $room['available_bedspaces']; ?> bedspace(s) available</span>
+                                </div>
+                            <?php else: ?>
+                                <div class="feature-detail-item">
+                                    <span class="icon">👥</span>
+                                    <span>Up to <?php echo $room['capacity']; ?> person(s)</span>
+                                </div>
+                            <?php endif; ?>
                             <div class="feature-detail-item">
                                 <span class="icon">📐</span>
                                 <span><?php echo ucfirst($room['room_type']); ?> Room</span>

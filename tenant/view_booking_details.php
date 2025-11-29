@@ -10,11 +10,14 @@ $booking_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 // Get booking details
 $query = "
     SELECT b.*, 
-           r.room_number, r.room_type, r.price, r.floor_number, r.category,
+           r.room_number, r.room_type, r.price, r.price_per_bedspace, r.floor_number, r.category,
            r.has_wifi, r.has_ac, r.has_bathroom,
+           b.is_bedspace_booking, b.bedspace_id,
+           bs.bedspace_number,
            u.first_name as approver_first_name, u.last_name as approver_last_name
     FROM bookings b 
     JOIN rooms r ON b.room_id = r.id 
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     LEFT JOIN users u ON b.approved_by = u.id
     WHERE b.id = ? AND b.tenant_id = ?
 ";
@@ -29,7 +32,10 @@ if (!$booking) {
     redirect("tenant/bookings");
 }
 
-$page_title = 'Booking Details - Room ' . $booking['room_number'];
+$room_display = $booking['is_bedspace_booking'] && $booking['bedspace_number']
+    ? "Room {$booking['room_number']} Bed {$booking['bedspace_number']}"
+    : "Room {$booking['room_number']}";
+$page_title = 'Booking Details - ' . $room_display;
 
 // Get room photos
 $photos_query = "SELECT * FROM room_photos WHERE room_id = ? ORDER BY is_primary DESC, id ASC";
@@ -517,6 +523,34 @@ require_once '../includes/header.php';
         line-height: 1.6;
     }
     
+    /* Bedspace Badge */
+    .bedspace-badge-hero {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+        color: #1e40af;
+        border: 2px solid #60a5fa;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-left: 1rem;
+    }
+    
+    .bedspace-info-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+        color: #1e40af;
+        border: 1px solid #60a5fa;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
     /* Print Button */
     .print-btn-floating {
         position: fixed;
@@ -603,7 +637,13 @@ require_once '../includes/header.php';
     <!-- Hero Section -->
     <div class="booking-hero">
         <div class="booking-hero-content">
-            <h1>Room <?php echo htmlspecialchars($booking['room_number']); ?></h1>
+            <h1>
+                <?php echo $booking['is_bedspace_booking'] ? '🛏️' : '🏠'; ?>
+                <?php echo htmlspecialchars($room_display); ?>
+                <?php if ($booking['is_bedspace_booking']): ?>
+                    <span class="bedspace-badge-hero">Bedspace</span>
+                <?php endif; ?>
+            </h1>
             <div class="booking-hero-meta">
                 <span class="hero-meta-item">
                     🏠 <?php echo ucfirst(htmlspecialchars($booking['room_type'])); ?>
@@ -614,7 +654,15 @@ require_once '../includes/header.php';
                 </span>
                 <?php endif; ?>
                 <span class="hero-meta-item">
-                    💰 <?php echo format_currency($booking['price']); ?>/month
+                    💰 <?php 
+                        $display_price = $booking['is_bedspace_booking'] && $booking['price_per_bedspace']
+                            ? $booking['price_per_bedspace']
+                            : $booking['price'];
+                        echo format_currency($display_price); 
+                    ?>/month
+                    <?php if ($booking['is_bedspace_booking']): ?>
+                        <span style="font-size: 0.85rem; opacity: 0.9;">(Bedspace Rate)</span>
+                    <?php endif; ?>
                 </span>
             </div>
             <div class="booking-status-hero">
@@ -743,17 +791,36 @@ require_once '../includes/header.php';
             <!-- Room Details -->
             <div class="info-section-card">
                 <h2>
-                    <span class="section-icon">🏠</span>
-                    Room Details
+                    <span class="section-icon"><?php echo $booking['is_bedspace_booking'] ? '🛏️' : '🏠'; ?></span>
+                    <?php echo $booking['is_bedspace_booking'] ? 'Bedspace Details' : 'Room Details'; ?>
                 </h2>
                 <div class="info-grid-two-col">
                     <div class="info-field">
                         <span class="info-field-label">Room Number</span>
                         <span class="info-field-value"><?php echo htmlspecialchars($booking['room_number']); ?></span>
                     </div>
+                    <?php if ($booking['is_bedspace_booking'] && $booking['bedspace_number']): ?>
+                    <div class="info-field">
+                        <span class="info-field-label">Bedspace Number</span>
+                        <span class="info-field-value">
+                            Bed <?php echo htmlspecialchars($booking['bedspace_number']); ?>
+                            <span class="bedspace-info-badge">Bedspace</span>
+                        </span>
+                    </div>
+                    <?php endif; ?>
                     <div class="info-field">
                         <span class="info-field-label">Room Type</span>
                         <span class="info-field-value"><?php echo ucfirst(htmlspecialchars($booking['room_type'])); ?></span>
+                    </div>
+                    <div class="info-field">
+                        <span class="info-field-label">Booking Type</span>
+                        <span class="info-field-value">
+                            <?php if ($booking['is_bedspace_booking']): ?>
+                                <span class="bedspace-info-badge">🛏️ Bedspace Rental</span>
+                            <?php else: ?>
+                                <span class="badge-enhanced primary">🏠 Full Room</span>
+                            <?php endif; ?>
+                        </span>
                     </div>
                     <?php if ($booking['category']): ?>
                     <div class="info-field">
@@ -768,9 +835,28 @@ require_once '../includes/header.php';
                     </div>
                     <?php endif; ?>
                     <div class="info-field">
-                        <span class="info-field-label">Monthly Rate</span>
-                        <span class="info-field-value"><?php echo format_currency($booking['price']); ?></span>
+                        <span class="info-field-label"><?php echo $booking['is_bedspace_booking'] ? 'Bedspace Rate' : 'Monthly Rate'; ?></span>
+                        <span class="info-field-value">
+                            <?php 
+                                $display_price = $booking['is_bedspace_booking'] && $booking['price_per_bedspace']
+                                    ? $booking['price_per_bedspace']
+                                    : $booking['price'];
+                                echo format_currency($display_price); 
+                            ?>
+                            <?php if ($booking['is_bedspace_booking']): ?>
+                                <br><small style="color: #64748b; font-size: 0.8rem;">(Bedspace pricing)</small>
+                            <?php endif; ?>
+                        </span>
                     </div>
+                    <?php if ($booking['is_bedspace_booking'] && $booking['price']): ?>
+                    <div class="info-field">
+                        <span class="info-field-label">Full Room Rate</span>
+                        <span class="info-field-value" style="opacity: 0.6;">
+                            <?php echo format_currency($booking['price']); ?>
+                            <br><small style="color: #64748b; font-size: 0.8rem;">(Reference only)</small>
+                        </span>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 
                 <!-- Built-in Amenities -->
@@ -1004,6 +1090,10 @@ require_once '../includes/header.php';
                        onclick="return confirm('Are you sure you want to cancel this booking?')">
                         Cancel Booking
                     </a>
+                    <?php elseif ($booking['status'] === 'checked_in'): ?>
+                    <button onclick="showCheckoutModal()" class="btn-enhanced warning">
+                        🚪 Check Out
+                    </button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1022,9 +1112,53 @@ require_once '../includes/header.php';
     </div>
 </div>
 
+<!-- Checkout Modal -->
+<div id="checkoutModal" class="cancel-modal-overlay">
+    <div class="cancel-modal-content">
+        <h3>🚪 Check Out</h3>
+        <p>Are you sure you want to check out? This will mark your stay as complete and the room will become available.</p>
+        <form method="POST" action="<?php echo TENANT_URL; ?>/checkout_booking">
+            <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+            <div class="cancel-modal-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" onclick="hideCheckoutModal()" class="btn-enhanced outline" style="flex: 1;">
+                    Not Yet
+                </button>
+                <button type="submit" class="btn-enhanced warning" style="flex: 1;">
+                    Yes, Check Out
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Floating Print Button -->
 <button onclick="window.print()" class="print-btn-floating" title="Print Details">
     🖨️
 </button>
+
+<script>
+function showCheckoutModal() {
+    document.getElementById('checkoutModal').classList.add('active');
+}
+
+function hideCheckoutModal() {
+    document.getElementById('checkoutModal').classList.remove('active');
+}
+
+// Close modal on outside click
+document.getElementById('checkoutModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideCheckoutModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideCheckoutModal();
+    }
+});
+</script>
 
 <?php require_once '../includes/footer.php'; ?>

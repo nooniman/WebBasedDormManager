@@ -168,11 +168,12 @@ if (isset($_SESSION['user_id'])) {
             align-items: center;
         }
         
-        .nav-menu li {
+        .nav-menu > li {
             position: relative;
         }
         
-        .nav-menu li a {
+        .nav-menu > li > a,
+        .nav-menu > li > .nav-dropdown-toggle {
             padding: 0.7rem 1.2rem;
             color: #475569;
             text-decoration: none;
@@ -185,9 +186,14 @@ if (isset($_SESSION['user_id'])) {
             gap: 0.5rem;
             position: relative;
             letter-spacing: -0.01em;
+            background: none;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
         }
         
-        .nav-menu li a::before {
+        .nav-menu > li > a::before,
+        .nav-menu > li > .nav-dropdown-toggle::before {
             content: '';
             position: absolute;
             bottom: 0;
@@ -200,7 +206,9 @@ if (isset($_SESSION['user_id'])) {
             border-radius: 2px;
         }
         
-        .nav-menu li a:hover {
+        .nav-menu > li > a:hover,
+        .nav-menu > li > .nav-dropdown-toggle:hover,
+        .nav-menu > li.dropdown-active > .nav-dropdown-toggle {
             color: #667eea;
             background: linear-gradient(135deg, 
                 rgba(102, 126, 234, 0.08) 0%, 
@@ -209,11 +217,13 @@ if (isset($_SESSION['user_id'])) {
             transform: translateY(-1px);
         }
         
-        .nav-menu li a:hover::before {
+        .nav-menu > li > a:hover::before,
+        .nav-menu > li > .nav-dropdown-toggle:hover::before,
+        .nav-menu > li.dropdown-active > .nav-dropdown-toggle::before {
             width: 80%;
         }
         
-        .nav-menu li a.active {
+        .nav-menu > li > a.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3),
@@ -221,8 +231,99 @@ if (isset($_SESSION['user_id'])) {
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         }
         
-        .nav-menu li a.active::before {
+        .nav-menu > li > a.active::before {
             display: none;
+        }
+        
+        /* Dropdown Arrow */
+        .dropdown-arrow {
+            width: 12px;
+            height: 12px;
+            margin-left: 0.25rem;
+            transition: transform 0.3s ease;
+            opacity: 0.7;
+        }
+        
+        .dropdown-active .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        /* Dropdown Menu */
+        .nav-dropdown {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            min-width: 220px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12),
+                        0 0 1px rgba(0, 0, 0, 0.05);
+            padding: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        
+        .dropdown-active .nav-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .nav-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 20px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            transform: rotate(45deg);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            border-left: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .nav-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #475569;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .nav-dropdown a:hover {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #667eea;
+            padding-left: 1.25rem;
+        }
+        
+        .nav-dropdown a.active {
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.12) 0%, 
+                rgba(118, 75, 162, 0.12) 100%);
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .nav-dropdown a.active::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            width: 3px;
+            height: 60%;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
         }
         
         /* User Profile Button - Enhanced with Profile Picture */
@@ -480,7 +581,33 @@ if (isset($_SESSION['user_id'])) {
         }
         
         /* Responsive Design */
-        @media (max-width: 1024px) {
+        @media (max-width: 1280px) {
+            .navbar .container {
+                padding: 0 1.5rem;
+            }
+            
+            .nav-menu {
+                gap: 0.15rem;
+            }
+            
+            .nav-menu > li > a,
+            .nav-menu > li > .nav-dropdown-toggle {
+                padding: 0.65rem 0.9rem;
+                font-size: 0.85rem;
+            }
+            
+            .user-name {
+                max-width: 90px;
+                font-size: 0.85rem;
+            }
+            
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+            }
+        }
+        
+        @media (max-width: 1100px) {
             .navbar .container {
                 padding: 0 1.5rem;
             }
@@ -499,20 +626,50 @@ if (isset($_SESSION['user_id'])) {
                 box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
                 border-top: 1px solid rgba(0, 0, 0, 0.06);
                 animation: slideInDown 0.3s ease-out;
+                max-height: calc(100vh - 75px);
+                overflow-y: auto;
             }
             
             .nav-menu.show {
                 display: flex;
             }
             
-            .nav-menu li {
+            .nav-menu > li {
                 width: 100%;
             }
             
-            .nav-menu li a {
+            .nav-menu > li > a,
+            .nav-menu > li > .nav-dropdown-toggle {
                 width: 100%;
                 justify-content: flex-start;
                 padding: 1rem 1.25rem;
+                font-size: 0.95rem;
+            }
+            
+            /* Mobile dropdown adjustments */
+            .nav-dropdown {
+                position: static;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                box-shadow: none;
+                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                margin-top: 0.5rem;
+                border: none;
+                backdrop-filter: none;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease, padding 0.3s ease;
+                padding: 0 0.5rem;
+            }
+            
+            .nav-dropdown::before {
+                display: none;
+            }
+            
+            .dropdown-active .nav-dropdown {
+                max-height: 500px;
+                padding: 0.5rem;
             }
             
             .mobile-menu-toggle {
@@ -523,6 +680,16 @@ if (isset($_SESSION['user_id'])) {
             
             .user-profile-btn {
                 border-radius: 12px !important;
+                padding: 0.75rem 1rem !important;
+            }
+            
+            .user-name {
+                max-width: none !important;
+            }
+            
+            .user-avatar {
+                width: 36px;
+                height: 36px;
             }
         }
         
@@ -603,10 +770,23 @@ if (isset($_SESSION['user_id'])) {
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
                         Tenants
                     </a></li>
-                    <li><a href="<?php echo ADMIN_URL; ?>/rooms" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9.3V4h-3v2.6L12 3 2 12h3v8h6v-6h2v6h6v-8h3l-3-2.7zM17 18h-2v-6H9v6H7v-7.81l5-4.5 5 4.5V18z"/></svg>
-                        Rooms
-                    </a></li>
+                    <li class="nav-dropdown-container">
+                        <button class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9.3V4h-3v2.6L12 3 2 12h3v8h6v-6h2v6h6v-8h3l-3-2.7zM17 18h-2v-6H9v6H7v-7.81l5-4.5 5 4.5V18z"/></svg>
+                            Accommodations
+                            <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                        </button>
+                        <div class="nav-dropdown">
+                            <a href="<?php echo ADMIN_URL; ?>/rooms" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9.3V4h-3v2.6L12 3 2 12h3v8h6v-6h2v6h6v-8h3l-3-2.7zM17 18h-2v-6H9v6H7v-7.81l5-4.5 5 4.5V18z"/></svg>
+                                Rooms
+                            </a>
+                            <a href="<?php echo ADMIN_URL; ?>/bedspaces" <?php echo basename($_SERVER['PHP_SELF']) === 'bedspaces.php' ? 'class="active"' : ''; ?>>
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/></svg>
+                                Bedspaces
+                            </a>
+                        </div>
+                    </li>
                     <li><a href="<?php echo ADMIN_URL; ?>/bookings" <?php echo basename($_SERVER['PHP_SELF']) === 'bookings.php' || basename($_SERVER['PHP_SELF']) === 'view_booking.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
                         Bookings
@@ -615,14 +795,23 @@ if (isset($_SESSION['user_id'])) {
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
                         Payments
                     </a></li>
-                    <li><a href="<?php echo ADMIN_URL; ?>/announcements" <?php echo basename($_SERVER['PHP_SELF']) === 'announcements.php' ? 'class="active"' : ''; ?>>
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
-                        Announcements
-                    </a></li>
-                    <li><a href="<?php echo ADMIN_URL; ?>/reports" <?php echo basename($_SERVER['PHP_SELF']) === 'reports.php' ? 'class="active"' : ''; ?>>
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-                        Reports
-                    </a></li>
+                    <li class="nav-dropdown-container">
+                        <button class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            More
+                            <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                        </button>
+                        <div class="nav-dropdown">
+                            <a href="<?php echo ADMIN_URL; ?>/announcements" <?php echo basename($_SERVER['PHP_SELF']) === 'announcements.php' ? 'class="active"' : ''; ?>>
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+                                Announcements
+                            </a>
+                            <a href="<?php echo ADMIN_URL; ?>/reports" <?php echo basename($_SERVER['PHP_SELF']) === 'reports.php' ? 'class="active"' : ''; ?>>
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                                Reports
+                            </a>
+                        </div>
+                    </li>
                     <li>
                         <a href="<?php echo ADMIN_URL; ?>/profile" class="user-profile-btn">
                             <div class="avatar-wrapper">
@@ -647,10 +836,23 @@ if (isset($_SESSION['user_id'])) {
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                         Portal
                     </a></li>
-                    <li><a href="<?php echo PUBLIC_URL; ?>/rooms" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        Browse Rooms
-                    </a></li>
+                    <li class="nav-dropdown-container">
+                        <button class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                            Browse
+                            <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                        </button>
+                        <div class="nav-dropdown">
+                            <a href="<?php echo PUBLIC_URL; ?>/rooms" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9.3V4h-3v2.6L12 3 2 12h3v8h6v-6h2v6h6v-8h3l-3-2.7zM17 18h-2v-6H9v6H7v-7.81l5-4.5 5 4.5V18z"/></svg>
+                                Rooms
+                            </a>
+                            <a href="<?php echo PUBLIC_URL; ?>/bedspaces" <?php echo basename($_SERVER['PHP_SELF']) === 'bedspaces.php' ? 'class="active"' : ''; ?>>
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/></svg>
+                                Bedspaces
+                            </a>
+                        </div>
+                    </li>
                     <li><a href="<?php echo TENANT_URL; ?>/bookings" <?php echo basename($_SERVER['PHP_SELF']) === 'bookings.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
                         My Bookings
@@ -683,10 +885,23 @@ if (isset($_SESSION['user_id'])) {
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                         Home
                     </a></li>
-                    <li><a href="<?php echo PUBLIC_URL; ?>/rooms" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        Rooms
-                    </a></li>
+                    <li class="nav-dropdown-container">
+                        <button class="nav-dropdown-toggle" onclick="toggleDropdown(this)">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                            Browse
+                            <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                        </button>
+                        <div class="nav-dropdown">
+                            <a href="<?php echo PUBLIC_URL; ?>/rooms" <?php echo basename($_SERVER['PHP_SELF']) === 'rooms.php' ? 'class="active"' : ''; ?>>
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9.3V4h-3v2.6L12 3 2 12h3v8h6v-6h2v6h6v-8h3l-3-2.7zM17 18h-2v-6H9v6H7v-7.81l5-4.5 5 4.5V18z"/></svg>
+                                Rooms
+                            </a>
+                            <a href="<?php echo PUBLIC_URL; ?>/bedspaces" <?php echo basename($_SERVER['PHP_SELF']) === 'bedspaces.php' ? 'class="active"' : ''; ?>>
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/></svg>
+                                Bedspaces
+                            </a>
+                        </div>
+                    </li>
                     <li><a href="<?php echo LOGIN_URL; ?>" <?php echo basename($_SERVER['PHP_SELF']) === 'login.php' ? 'class="active"' : ''; ?>>
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
                         Login
@@ -726,15 +941,39 @@ if (isset($_SESSION['user_id'])) {
             document.getElementById('navMenu').classList.toggle('show');
         }
         
-        // Close mobile menu when clicking outside
+        function toggleDropdown(button) {
+            const parent = button.parentElement;
+            const wasActive = parent.classList.contains('dropdown-active');
+            
+            // Close all dropdowns
+            document.querySelectorAll('.nav-dropdown-container').forEach(container => {
+                container.classList.remove('dropdown-active');
+            });
+            
+            // Toggle current dropdown
+            if (!wasActive) {
+                parent.classList.add('dropdown-active');
+            }
+        }
+        
+        // Close dropdowns when clicking outside
         document.addEventListener('click', function(event) {
             const menu = document.getElementById('navMenu');
             const toggle = document.querySelector('.mobile-menu-toggle');
+            const dropdowns = document.querySelectorAll('.nav-dropdown-container');
             
+            // Close mobile menu when clicking outside
             if (menu.classList.contains('show') && 
                 !menu.contains(event.target) && 
                 !toggle.contains(event.target)) {
                 menu.classList.remove('show');
+            }
+            
+            // Close dropdowns when clicking outside
+            if (!event.target.closest('.nav-dropdown-container')) {
+                dropdowns.forEach(dropdown => {
+                    dropdown.classList.remove('dropdown-active');
+                });
             }
         });
         

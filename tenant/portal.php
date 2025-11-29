@@ -11,10 +11,12 @@ $tenant_id = $_SESSION['user_id'];
 
 // Get tenant's current booking (approved or checked_in)
 $booking_query = "
-    SELECT b.*, r.room_number, r.room_type, r.price, r.floor_number,
-           (SELECT photo_path FROM room_photos WHERE room_id = r.id AND is_primary = 1 LIMIT 1) as room_photo
+    SELECT b.*, r.room_number, r.room_type, r.price, r.floor_number, r.is_bedspace, r.price_per_bedspace,
+           (SELECT photo_path FROM room_photos WHERE room_id = r.id AND is_primary = 1 LIMIT 1) as room_photo,
+           bs.bedspace_number
     FROM bookings b 
     JOIN rooms r ON b.room_id = r.id 
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     WHERE b.tenant_id = ? AND b.status IN ('approved', 'checked_in')
     ORDER BY b.created_at DESC
     LIMIT 1
@@ -92,6 +94,15 @@ $announcements = $conn->query("
     ORDER BY a.created_at DESC 
     LIMIT 3
 ");
+
+// Get bedspace information if tenant has bedspace booking
+require_once '../includes/bedspace_functions.php';
+$my_bedspace = null;
+$roommates = [];
+if ($current_booking && $current_booking['is_bedspace_booking'] && $current_booking['bedspace_id']) {
+    $my_bedspace = get_bedspace($conn, $current_booking['bedspace_id']);
+    $roommates = get_roommates($conn, $current_booking['bedspace_id']);
+}
 
 // Get unread notifications count
 $notif_count_query = "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0";
@@ -606,11 +617,19 @@ $stmt->close();
                     <?php endif; ?>
                     
                     <div class="room-info-modern">
-                        <h3>Room <?php echo htmlspecialchars($current_booking['room_number']); ?></h3>
+                        <h3>
+                            Room <?php echo htmlspecialchars($current_booking['room_number']); ?>
+                            <?php if ($current_booking['is_bedspace_booking'] && $current_booking['bedspace_number']): ?>
+                                <span class="badge badge-info" style="font-size: 0.75rem; margin-left: 0.5rem;">Bed <?php echo htmlspecialchars($current_booking['bedspace_number']); ?></span>
+                            <?php endif; ?>
+                        </h3>
                         <p class="room-meta">
                             <?php echo ucfirst(htmlspecialchars($current_booking['room_type'])); ?>
                             <?php if ($current_booking['floor_number']): ?>
                                 • Floor <?php echo $current_booking['floor_number']; ?>
+                            <?php endif; ?>
+                            <?php if ($current_booking['is_bedspace_booking']): ?>
+                                • <strong>Bedspace Rental</strong>
                             <?php endif; ?>
                         </p>
                         <span class="badge-enhanced <?php echo $current_booking['status'] === 'checked_in' ? 'success' : 'info'; ?>">
@@ -643,6 +662,31 @@ $stmt->close();
                     </div>
                     <?php endif; ?>
                 </div>
+                
+                <?php if ($my_bedspace && count($roommates) > 0): ?>
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+                    <h4 style="font-size: 0.95rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem;">
+                        👥 Your Roommates (<?php echo count($roommates); ?>)
+                    </h4>
+                    <div style="display: grid; gap: 0.75rem;">
+                        <?php foreach ($roommates as $mate): ?>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 1rem;">
+                                    <?php echo strtoupper(substr($mate['first_name'], 0, 1)); ?>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #1e293b;">
+                                        <?php echo htmlspecialchars($mate['first_name'] . ' ' . $mate['last_name']); ?>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">
+                                        Bedspace <?php echo htmlspecialchars($mate['bedspace_number']); ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
                 
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
                     <a href="<?php echo TENANT_URL; ?>/view_booking_details?id=<?php echo $current_booking['id']; ?>" 

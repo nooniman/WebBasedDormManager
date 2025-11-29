@@ -21,6 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $has_ac = isset($_POST['has_ac']) ? 1 : 0;
         $has_bathroom = isset($_POST['has_bathroom']) ? 1 : 0;
         
+        // Bedspace fields
+        $is_bedspace = isset($_POST['is_bedspace']) ? 1 : 0;
+        $total_bedspaces = $is_bedspace ? intval($_POST['total_bedspaces']) : 0;
+        $price_per_bedspace = $is_bedspace ? floatval($_POST['price_per_bedspace']) : null;
+        
         $errors = [];
         
         // Validate room number uniqueness
@@ -34,22 +39,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (empty($room_number)) $errors[] = "Room number is required";
         if ($capacity < 1) $errors[] = "Capacity must be at least 1";
-        if ($price <= 0) $errors[] = "Price must be greater than 0";
+        if ($price <= 0 && !$is_bedspace) $errors[] = "Price must be greater than 0";
+        if ($is_bedspace && $total_bedspaces < 2) $errors[] = "Bedspace rooms must have at least 2 bedspaces";
+        if ($is_bedspace && $price_per_bedspace <= 0) $errors[] = "Price per bedspace must be greater than 0";
         
         if (empty($errors)) {
             $stmt = $conn->prepare("
                 INSERT INTO rooms 
-                (room_number, room_type, category, floor_number, capacity, price, status, description, has_wifi, has_ac, has_bathroom, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                (room_number, room_type, category, floor_number, capacity, price, status, description, has_wifi, has_ac, has_bathroom, is_bedspace, total_bedspaces, occupied_bedspaces, price_per_bedspace, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NOW())
             ");
-            $stmt->bind_param("sssiidssiii", 
+            $stmt->bind_param("sssiidssiiiiiid", 
                 $room_number, $room_type, $category, $floor_number,
                 $capacity, $price, $status, $description,
-                $has_wifi, $has_ac, $has_bathroom
+                $has_wifi, $has_ac, $has_bathroom,
+                $is_bedspace, $total_bedspaces, $price_per_bedspace
             );
             
             if ($stmt->execute()) {
                 $new_room_id = $stmt->insert_id;
+                
+                // Create bedspaces if it's a bedspace room
+                if ($is_bedspace) {
+                    require_once '../includes/bedspace_functions.php';
+                    create_bedspaces($conn, $new_room_id, $total_bedspaces);
+                }
                 
                 // Handle photo upload if provided
                 if (isset($_FILES['room_photo']) && $_FILES['room_photo']['error'] === UPLOAD_ERR_OK) {
@@ -65,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 set_flash_message('Room added successfully! 🎉', 'success');
-                redirect('admin/room_details?id=' . $new_room_id);
+                redirect(ADMIN_URL . '/room_details?id=' . $new_room_id);
             } else {
                 $errors[] = "Failed to add room: " . $stmt->error;
             }
@@ -559,9 +573,9 @@ require_once '../includes/header.php';
     <div class="container">
         <!-- Breadcrumb -->
         <nav class="breadcrumb-nav">
-            <a href="dashboard">Dashboard</a>
+            <a href="<?php echo ADMIN_URL; ?>/dashboard">Dashboard</a>
             <span>→</span>
-            <a href="rooms">Rooms</a>
+            <a href="<?php echo ADMIN_URL; ?>/rooms">Rooms</a>
             <span>→</span>
             <span>Add New Room</span>
         </nav>
@@ -577,7 +591,7 @@ require_once '../includes/header.php';
                     <p class="header-subtitle">Create a new room for your dormitory</p>
                 </div>
                 <div class="header-actions">
-                    <a href="rooms" class="header-btn secondary">
+                    <a href="<?php echo ADMIN_URL; ?>/rooms" class="header-btn secondary">
                         <span>←</span>
                         <span>Back to Rooms</span>
                     </a>
@@ -663,11 +677,10 @@ require_once '../includes/header.php';
                                        min="1" 
                                        max="10"
                                        required>
-                            </div>
                         </div>
                         
                         <!-- Price -->
-                        <div class="form-group-modern">
+                        <div class="form-group-modern" id="regularPriceField">
                             <label class="form-label-modern" for="price">
                                 Monthly Price (₱) <span class="required">*</span>
                             </label>
@@ -677,11 +690,72 @@ require_once '../includes/header.php';
                                    class="form-input-modern" 
                                    placeholder="e.g., 5000"
                                    step="0.01" 
-                                   min="0"
-                                   required>
+                                   min="0">
                             <div class="price-preview" id="pricePreview" style="display: none;">
                                 <div class="price-preview-label">Monthly Rate</div>
                                 <div class="price-preview-value" id="pricePreviewValue">₱0.00</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bedspacing Section -->
+                        <div class="form-group-modern">
+                            <label class="checkbox-item">
+                                <input type="checkbox" 
+                                       name="is_bedspace" 
+                                       id="is_bedspace"
+                                       value="1"
+                                       onchange="toggleBedspaceFields()">
+                                <span class="checkbox-label">
+                                    <span>🛏️</span>
+                                    <span>Enable Bedspacing (Rent by Bed)</span>
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <div id="bedspaceFields" style="display: none; padding: 1.5rem; background: #f8fafc; border-radius: 8px; margin: 1rem 0;">
+                            <h4 style="margin: 0 0 1rem 0; color: #667eea; font-size: 1rem;">
+                                🛏️ Bedspace Configuration
+                            </h4>
+                            
+                            <div class="form-grid-2">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern" for="total_bedspaces">
+                                        Number of Bedspaces <span class="required">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           id="total_bedspaces" 
+                                           name="total_bedspaces" 
+                                           class="form-input-modern" 
+                                           placeholder="e.g., 4"
+                                           min="2" 
+                                           max="12"
+                                           value="4">
+                                    <small style="color: #64748b; font-size: 0.85rem;">Bedspaces will be labeled A, B, C, etc.</small>
+                                </div>
+                                
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern" for="price_per_bedspace">
+                                        Price per Bedspace (₱) <span class="required">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           id="price_per_bedspace" 
+                                           name="price_per_bedspace" 
+                                           class="form-input-modern" 
+                                           placeholder="e.g., 1500"
+                                           step="0.01" 
+                                           min="0">
+                                    <small style="color: #64748b; font-size: 0.85rem;">Monthly rate per bed</small>
+                                </div>
+                            </div>
+                            
+                            <div class="alert-box info" style="margin-top: 1rem;">
+                                <span class="alert-icon">ℹ️</span>
+                                <div class="alert-content">
+                                    <div class="alert-title">Bedspacing Info</div>
+                                    <p class="alert-text">
+                                        Bedspaces allow multiple tenants to rent individual beds in the same room. Each bedspace is tracked separately for bookings and payments.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                         
@@ -778,7 +852,7 @@ require_once '../includes/header.php';
                                 <span>💾</span>
                                 <span>Add Room</span>
                             </button>
-                            <a href="rooms" class="btn-modern secondary">
+                            <a href="<?php echo ADMIN_URL; ?>/rooms" class="btn-modern secondary">
                                 <span>✕</span>
                                 <span>Cancel</span>
                             </a>
@@ -830,6 +904,30 @@ require_once '../includes/header.php';
 </div>
 
 <script>
+// Toggle bedspace fields
+function toggleBedspaceFields() {
+    const checkbox = document.getElementById('is_bedspace');
+    const bedspaceFields = document.getElementById('bedspaceFields');
+    const regularPriceField = document.getElementById('regularPriceField');
+    const priceInput = document.getElementById('price');
+    const totalBedspacesInput = document.getElementById('total_bedspaces');
+    const pricePerBedspaceInput = document.getElementById('price_per_bedspace');
+    
+    if (checkbox.checked) {
+        bedspaceFields.style.display = 'block';
+        regularPriceField.style.display = 'none';
+        priceInput.removeAttribute('required');
+        totalBedspacesInput.setAttribute('required', 'required');
+        pricePerBedspaceInput.setAttribute('required', 'required');
+    } else {
+        bedspaceFields.style.display = 'none';
+        regularPriceField.style.display = 'block';
+        priceInput.setAttribute('required', 'required');
+        totalBedspacesInput.removeAttribute('required');
+        pricePerBedspaceInput.removeAttribute('required');
+    }
+}
+
 // Price preview
 const priceInput = document.getElementById('price');
 const pricePreview = document.getElementById('pricePreview');

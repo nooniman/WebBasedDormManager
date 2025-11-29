@@ -11,7 +11,9 @@ $stats_query = "
         COUNT(*) as total_rooms,
         SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available_rooms,
         MIN(price) as min_price,
-        MAX(price) as max_price
+        MAX(price) as max_price,
+        SUM(CASE WHEN is_bedspace = 1 THEN 1 ELSE 0 END) as bedspace_rooms,
+        SUM(CASE WHEN is_bedspace = 1 THEN (total_bedspaces - occupied_bedspaces) ELSE 0 END) as available_bedspaces
     FROM rooms
 ";
 $stats = $conn->query($stats_query)->fetch_assoc();
@@ -597,7 +599,7 @@ require_once '../includes/header.php';
                 and a seamless booking process. Your ideal room is just a click away!
             </p>
             <div class="hero-buttons">
-                <a href="rooms" class="hero-btn primary">
+                <a href="<?php echo PUBLIC_URL; ?>/rooms" class="hero-btn primary">
                     <span>Browse Available Rooms</span>
                     <span>→</span>
                 </a>
@@ -620,6 +622,11 @@ require_once '../includes/header.php';
                 <div class="stat-icon">✓</div>
                 <div class="stat-value"><?php echo $stats['available_rooms']; ?></div>
                 <div class="stat-label">Available Now</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🛏️</div>
+                <div class="stat-value"><?php echo $stats['available_bedspaces']; ?></div>
+                <div class="stat-label">Bedspaces Available</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">💰</div>
@@ -725,7 +732,7 @@ require_once '../includes/header.php';
                                 <a href="room_view?id=<?php echo $room['id']; ?>" class="room-btn outline">
                                     View Details
                                 </a>
-                                <a href="rooms" class="room-btn primary">
+                                <a href="<?php echo PUBLIC_URL; ?>/rooms" class="room-btn primary">
                                     Book Now
                                 </a>
                             </div>
@@ -735,10 +742,54 @@ require_once '../includes/header.php';
             </div>
             
             <div style="text-align: center; margin-top: 3rem;">
-                <a href="rooms" class="hero-btn primary" style="display: inline-flex;">
+                <a href="public/rooms" class="hero-btn primary" style="display: inline-flex;">
                     View All Rooms
                     <span>→</span>
                 </a>
+            </div>
+        </div>
+    </section>
+    <?php endif; ?>
+    
+    <!-- Bedspace CTA Section -->
+    <?php if ($stats['available_bedspaces'] > 0): ?>
+    <section class="bedspace-cta-section" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 4rem 0; margin: 3rem 0; border-radius: 24px; color: white; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -50%; right: -10%; width: 500px; height: 500px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; animation: float 20s infinite ease-in-out;"></div>
+        <div class="container" style="position: relative; z-index: 1;">
+            <div style="text-align: center; max-width: 800px; margin: 0 auto;">
+                <div style="display: inline-block; padding: 0.5rem 1.5rem; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border-radius: 30px; font-size: 0.9rem; font-weight: 600; margin-bottom: 1.5rem;">
+                    🛏️ Budget-Friendly Option
+                </div>
+                <h2 style="font-size: 3rem; font-weight: 900; margin: 0 0 1rem 0; line-height: 1.1;">
+                    Looking for Bedspace Rentals?
+                </h2>
+                <p style="font-size: 1.3rem; opacity: 0.95; margin-bottom: 2rem; line-height: 1.6;">
+                    Rent just a bed in a shared room - perfect for students and budget-conscious tenants. 
+                    <strong><?php echo $stats['available_bedspaces']; ?> bedspaces</strong> available now starting at affordable rates!
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
+                    <a href="<?php echo PUBLIC_URL; ?>/bedspaces" class="hero-btn" style="background: white; color: #059669; padding: 1.2rem 2.5rem; font-size: 1.1rem; border-radius: 15px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.75rem; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); transition: all 0.3s ease;">
+                        <span>🛏️ Browse Bedspaces</span>
+                        <span>→</span>
+                    </a>
+                    <a href="<?php echo PUBLIC_URL; ?>/rooms" class="hero-btn" style="background: transparent; color: white; border: 2px solid white; padding: 1.2rem 2.5rem; font-size: 1.1rem; border-radius: 15px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.75rem; transition: all 0.3s ease;">
+                        <span>🏠 View Full Rooms</span>
+                    </a>
+                </div>
+                <div style="display: flex; gap: 3rem; justify-content: center; margin-top: 3rem; flex-wrap: wrap;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.25rem;"><?php echo $stats['bedspace_rooms']; ?></div>
+                        <div style="font-size: 0.95rem; opacity: 0.9;">Bedspace Rooms</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.25rem;"><?php echo $stats['available_bedspaces']; ?></div>
+                        <div style="font-size: 0.95rem; opacity: 0.9;">Beds Available</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.25rem;">50%+</div>
+                        <div style="font-size: 0.95rem; opacity: 0.9;">Cost Savings</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -754,7 +805,7 @@ require_once '../includes/header.php';
                     Start your journey today!
                 </p>
                 <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                    <a href="rooms" class="hero-btn primary">
+                    <a href="<?php echo PUBLIC_URL; ?>/rooms" class="hero-btn primary">
                         Browse Available Rooms
                     </a>
                     <a href="<?php echo SITE_URL; ?>/register" class="hero-btn outline">

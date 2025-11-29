@@ -18,7 +18,11 @@ $sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'price_asc';
 $query = "
     SELECT r.*, 
            (SELECT photo_path FROM room_photos WHERE room_id = r.id AND is_primary = 1 LIMIT 1) as primary_photo,
-           (SELECT COUNT(*) FROM room_photos WHERE room_id = r.id) as photo_count
+           (SELECT COUNT(*) FROM room_photos WHERE room_id = r.id) as photo_count,
+           CASE 
+               WHEN r.is_bedspace = 1 THEN (r.total_bedspaces - r.occupied_bedspaces)
+               ELSE NULL 
+           END as available_bedspaces
     FROM rooms r 
     WHERE r.status = 'available'
 ";
@@ -876,17 +880,31 @@ require_once '../includes/header.php';
                                         <div class="room-info">
                                             <h3 class="room-number">Room <?php echo htmlspecialchars($room['room_number']); ?></h3>
                                             <span class="room-type-label"><?php echo ucfirst(htmlspecialchars($room['room_type'])); ?></span>
+                                            <?php if ($room['is_bedspace']): ?>
+                                                <span class="room-type-label" style="background: #10b981; color: white; margin-left: 0.5rem;">🛏️ Bedspacing</span>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="room-price-box">
-                                            <div class="room-price">₱<?php echo number_format($room['price'], 0); ?></div>
-                                            <div class="room-price-period">/month</div>
+                                            <?php if ($room['is_bedspace']): ?>
+                                                <div class="room-price">₱<?php echo number_format($room['price_per_bedspace'], 0); ?></div>
+                                                <div class="room-price-period">/bed/month</div>
+                                            <?php else: ?>
+                                                <div class="room-price">₱<?php echo number_format($room['price'], 0); ?></div>
+                                                <div class="room-price-period">/month</div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     
                                     <div class="room-features-list">
-                                        <span class="room-feature-item">
-                                            👥 <?php echo $room['capacity']; ?> Person(s)
-                                        </span>
+                                        <?php if ($room['is_bedspace']): ?>
+                                            <span class="room-feature-item" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 700;">
+                                                🛏️ <?php echo $room['available_bedspaces']; ?>/<?php echo $room['total_bedspaces']; ?> Bedspaces Available
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="room-feature-item">
+                                                👥 <?php echo $room['capacity']; ?> Person(s)
+                                            </span>
+                                        <?php endif; ?>
                                         <?php if ($room['has_wifi']): ?>
                                             <span class="room-feature-item">📶 WiFi</span>
                                         <?php endif; ?>

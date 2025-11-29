@@ -14,9 +14,12 @@ $debug_info = []; // For debugging
 
 // Get ALL active bookings for this tenant
 $all_bookings_stmt = $conn->prepare("
-    SELECT b.id, b.status, b.room_id, b.start_date, r.room_number, r.price, r.room_type
+    SELECT b.id, b.status, b.room_id, b.start_date, b.is_bedspace_booking, b.bedspace_id,
+           r.room_number, r.price, r.room_type, r.is_bedspace, r.price_per_bedspace,
+           bs.bedspace_number
     FROM bookings b
     JOIN rooms r ON b.room_id = r.id
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     WHERE b.tenant_id = ? AND b.status IN ('approved', 'checked_in')
     ORDER BY r.room_number ASC
 ");
@@ -86,9 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Verify booking belongs to user
             $verify_stmt = $conn->prepare("
-                SELECT b.*, r.room_number, r.price 
+                SELECT b.*, r.room_number, r.price, r.is_bedspace, r.price_per_bedspace,
+                       bs.bedspace_number
                 FROM bookings b 
                 JOIN rooms r ON b.room_id = r.id 
+                LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
                 WHERE b.id = ? AND b.tenant_id = ? AND b.status IN ('approved', 'checked_in')
             ");
             $verify_stmt->bind_param("ii", $selected_booking_id, $tenant_id);
@@ -101,9 +106,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$verified_booking) {
                 $error = 'Invalid booking selected. Please try again.';
             } else {
-                $amount = $verified_booking['price'] * $payment_months;
+                // Calculate amount based on booking type
+                $monthly_rate = $verified_booking['is_bedspace_booking'] && $verified_booking['price_per_bedspace'] 
+                    ? $verified_booking['price_per_bedspace'] 
+                    : $verified_booking['price'];
+                $amount = $monthly_rate * $payment_months;
                 $start_month = date('F Y');
-                $end_month = date('F Y', strtotime("+".($payment_months - 1)." months"));
+                $end_month = date('F Y', strtotime("+".(($payment_months - 1))." months"));
                 $payment_period = $payment_months == 1 ? $start_month : "{$start_month} - {$end_month}";
                 
                 $debug_info[] = "Amount: $amount";
@@ -115,7 +124,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $debug_info[] = "Return URL: " . $config['return_url'];
                 
                 // Create PayPal order
-                $description = "Room {$verified_booking['room_number']} - {$payment_months} month(s) rent";
+                $room_desc = $verified_booking['is_bedspace_booking'] && $verified_booking['bedspace_number']
+                    ? "Room {$verified_booking['room_number']} Bed {$verified_booking['bedspace_number']}"
+                    : "Room {$verified_booking['room_number']}";
+                $description = "{$room_desc} - {$payment_months} month(s) rent";
                 $reference_id = "BOOKING-{$selected_booking_id}-" . time();
                 
                 $debug_info[] = "Creating PayPal order...";
@@ -646,11 +658,19 @@ require_once '../includes/header.php';
             </div>
             <div class="room-tabs">
                 <?php foreach ($all_bookings as $b): ?>
+                    <?php 
+                    $display_price = $b['is_bedspace_booking'] && isset($b['price_per_bedspace']) 
+                        ? $b['price_per_bedspace'] 
+                        : $b['price'];
+                    $room_label = $b['is_bedspace_booking'] && isset($b['bedspace_number'])
+                        ? "Room {$b['room_number']} Bed {$b['bedspace_number']}"
+                        : "Room {$b['room_number']}";
+                    ?>
                     <a href="?booking_id=<?php echo $b['id']; ?>" 
                        class="room-tab <?php echo $b['id'] == $booking_id ? 'active' : ''; ?>">
-                        <div class="room-tab-number">Room <?php echo htmlspecialchars($b['room_number']); ?></div>
+                        <div class="room-tab-number"><?php echo htmlspecialchars($room_label); ?></div>
                         <div class="room-tab-type"><?php echo ucfirst($b['room_type']); ?></div>
-                        <div class="room-tab-price"><?php echo format_currency($b['price']); ?>/mo</div>
+                        <div class="room-tab-price"><?php echo format_currency($display_price); ?>/mo</div>
                         <div class="room-tab-status"><?php echo ucfirst(str_replace('_', ' ', $b['status'])); ?></div>
                     </a>
                 <?php endforeach; ?>
@@ -663,7 +683,13 @@ require_once '../includes/header.php';
                 <h1>💳 Make a Payment</h1>
                 <div class="room-info">
                     <span class="room-badge">
-                        Room <?php echo htmlspecialchars($booking['room_number']); ?> • <?php echo ucfirst($booking['room_type']); ?>
+                        <?php 
+                        if ($booking['is_bedspace_booking'] && $booking['bedspace_number']) {
+                            echo "Room {$booking['room_number']} Bed {$booking['bedspace_number']}";
+                        } else {
+                            echo "Room {$booking['room_number']}";
+                        }
+                        ?> • <?php echo ucfirst($booking['room_type']); ?>
                     </span>
                 </div>
             </div>
@@ -678,17 +704,30 @@ require_once '../includes/header.php';
                 
                 <div class="booking-summary">
                     <div class="summary-row">
-                        <span class="summary-label">Room Number</span>
-                        <span class="summary-value"><?php echo htmlspecialchars($booking['room_number']); ?></span>
+                        <span class="summary-label"><?php echo $booking['is_bedspace_booking'] ? 'Room & Bedspace' : 'Room Number'; ?></span>
+                        <span class="summary-value">
+                            <?php 
+                            if ($booking['is_bedspace_booking'] && $booking['bedspace_number']) {
+                                echo "Room {$booking['room_number']} Bed {$booking['bedspace_number']}";
+                            } else {
+                                echo htmlspecialchars($booking['room_number']);
+                            }
+                            ?>
+                        </span>
                     </div>
                     <div class="summary-row">
-                        <span class="summary-label">Room Type</span>
+                        <span class="summary-label"><?php echo $booking['is_bedspace_booking'] ? 'Bedspace Type' : 'Room Type'; ?></span>
                         <span class="summary-value"><?php echo ucfirst(htmlspecialchars($booking['room_type'])); ?></span>
                     </div>
                     <div class="summary-row">
                         <span class="summary-label">Monthly Rate</span>
                         <span class="summary-value" style="color: #10b981; font-weight: 700;">
-                            <?php echo format_currency($booking['price']); ?>
+                            <?php 
+                            $monthly_rate = $booking['is_bedspace_booking'] && isset($booking['price_per_bedspace']) 
+                                ? $booking['price_per_bedspace'] 
+                                : $booking['price'];
+                            echo format_currency($monthly_rate); 
+                            ?>
                         </span>
                     </div>
                     <div class="summary-row">
@@ -756,10 +795,15 @@ require_once '../includes/header.php';
                     <div class="total-display">
                         <div class="total-label">Total Amount to Pay</div>
                         <div class="total-amount" id="totalAmount">
-                            <?php echo format_currency($booking['price']); ?>
+                            <?php 
+                            $initial_rate = $booking['is_bedspace_booking'] && isset($booking['price_per_bedspace']) 
+                                ? $booking['price_per_bedspace'] 
+                                : $booking['price'];
+                            echo format_currency($initial_rate); 
+                            ?>
                         </div>
                         <div class="total-breakdown" id="totalBreakdown">
-                            <?php echo format_currency($booking['price']); ?> × 1 month
+                            <?php echo format_currency($initial_rate); ?> × 1 month
                         </div>
                     </div>
                     
@@ -789,7 +833,12 @@ require_once '../includes/header.php';
 </div>
 
 <script>
-const monthlyRate = <?php echo $booking['price']; ?>;
+// Calculate monthly rate based on booking type
+const monthlyRate = <?php 
+    echo $booking['is_bedspace_booking'] && isset($booking['price_per_bedspace']) 
+        ? $booking['price_per_bedspace'] 
+        : $booking['price']; 
+?>;
 
 function formatCurrency(amount) {
     return '₱' + amount.toLocaleString('en-US', {

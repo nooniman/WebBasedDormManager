@@ -17,13 +17,15 @@ $booking_id = intval($_GET['id']);
 // Fetch booking details with all related information
 $query = "
     SELECT b.*, 
-           r.room_number, r.room_type, r.price, r.capacity, r.floor_number, r.description,
+           r.room_number, r.room_type, r.price, r.capacity, r.floor_number, r.description, r.is_bedspace, r.price_per_bedspace,
            u.first_name, u.last_name, u.email, u.phone, u.address,
-           admin.first_name as approved_by_name, admin.last_name as approved_by_lastname
+           admin.first_name as approved_by_name, admin.last_name as approved_by_lastname,
+           bs.bedspace_number, bs.status as bedspace_status
     FROM bookings b 
     JOIN rooms r ON b.room_id = r.id 
     JOIN users u ON b.tenant_id = u.id 
     LEFT JOIN users admin ON b.approved_by = admin.id
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     WHERE b.id = ?
 ";
 

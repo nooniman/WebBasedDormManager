@@ -9,6 +9,13 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 - **Tenant Management**: Comprehensive tenant management with search, filters, grid/table views, and detailed tenant profiles
 - **Tenant Details**: Detailed tenant view with profile info, booking history, payment history, and account management
 - **Room Management**: Advanced room inventory with photo galleries, amenities, and room creation wizard
+- **Bedspace Management**: ✨ NEW - Dedicated submodule for managing individual bedspaces within shared rooms
+  - Real-time occupancy statistics dashboard
+  - Visual bedspace grid management (A/B/C/D slots)
+  - Room-by-room overview with occupancy bars
+  - Tenant assignment and release functionality
+  - Status management (available/occupied/maintenance)
+  - Advanced filtering and search capabilities
 - **Booking Management**: Visual booking calendar with status tracking and conflict detection
 - **Payment Tracking**: Detailed payment monitoring with PayPal transaction history, receipt viewing, and capture IDs
 - **Receipt Management**: View and print professional payment receipts with full transaction details
@@ -20,9 +27,15 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 
 ### For Tenants
 - **Room Browsing**: Advanced filtering (type, category, floor, price, amenities)
+- **Bedspace Browsing**: ✨ NEW - Dedicated bedspace marketplace with visual availability grids
+  - Filter by price range, floor, amenities (WiFi, AC)
+  - Real-time availability display (A/B/C/D slots)
+  - Starting prices from ₱1,500/month
+  - Select specific bed in shared room
 - **Room Gallery**: Stunning photo galleries with lightbox viewer
-- **Online Booking**: Streamlined booking request submission
-- **Personal Portal**: Enhanced dashboard with statistics and payment summary
+- **Online Booking**: Streamlined booking request submission with bedspace selection
+- **Personal Portal**: Enhanced dashboard with statistics, payment summary, and roommate information
+- **Roommate Display**: ✨ NEW - See who you're sharing the room with (for bedspace bookings)
 - **PayPal Payments**: Secure online payments via PayPal with sandbox/production modes
 - **Multi-Room Payments**: Pay for multiple bookings if tenant has more than one room
 - **Flexible Payment Duration**: Choose payment duration from 1-12 months
@@ -31,8 +44,17 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 - **Profile Management**: Update personal information and profile picture
 - **Announcements**: Stay updated with important notices
 - **SSO Login**: Secure login via Auth0 with social providers
-- **Booking Calendar**: Track your bookings with visual calendar
-- **Booking Details**: View comprehensive booking information with payment history
+- **Booking Calendar**: ✨ Enhanced visual calendar with bedspace indicators
+  - Blue gradient dots with 🛏️ icon for bedspace bookings
+  - Tooltips showing "Room 101 Bed A" details
+  - Bedspace badges in upcoming bookings list
+  - Color-coded by booking status
+- **Booking Details**: ✨ Enhanced booking view with bedspace context
+  - Prominent bedspace badges in hero section
+  - Correct bedspace pricing display (₱1,500)
+  - Booking type field (Room vs Bedspace)
+  - Reference full room pricing for comparison
+  - Complete payment history with method indicators
 
 ### Public Features
 - **Modern Homepage**: Welcoming landing page with feature highlights
@@ -54,6 +76,7 @@ A comprehensive web-based dormitory management system built with PHP, MySQL, Jav
 - **HTTP Client**: Guzzle 7.0+
 - **Charts**: Chart.js 4.4.0
 - **Design**: Modern gradient-based UI with glassmorphism effects
+- **Navigation**: ✨ Dropdown menu system with animated transitions and mobile responsiveness
 
 ## Installation
 
@@ -132,6 +155,7 @@ dormitory-management-system/
 │   ├── rooms.php               # Room inventory management
 │   ├── room_add.php            # ✨ Room creation wizard
 │   ├── room_details.php        # Room details with photo gallery
+│   ├── bedspaces.php           # ✨✨ NEW - Bedspace management submodule
 │   ├── payments.php            # ✨ Payment tracking with receipts & modals
 │   ├── bookings.php            # Booking management with card view
 │   ├── view_booking.php        # Detailed booking view with PayPal info
@@ -154,25 +178,27 @@ dormitory-management-system/
 │   ├── auth0_config.php        # Auth0 SSO configuration
 │   └── paypal_config.php       # ✨ PayPal API configuration
 ├── includes/                   # Reusable components
-│   ├── header.php              # Glassmorphism header with SVG icons
+│   ├── header.php              # ✨ Modern dropdown navigation with glassmorphism
 │   ├── footer.php              # Enhanced footer
 │   ├── functions.php           # Utility functions
 │   ├── auth0_functions.php     # Auth0 helper functions
 │   ├── booking_functions.php   # Booking helper functions
+│   ├── bedspace_functions.php  # ✨✨ NEW - Bedspace management functions
 │   ├── paypal_functions.php    # ✨ PayPal SDK wrapper functions
 │   ├── admin_auth.php          # Admin authentication guard
 │   └── tenant_auth.php         # Tenant authentication guard
 ├── public/                     # Public pages
 │   ├── index.php               # Homepage
 │   ├── rooms.php               # Room browsing with filters
+│   ├── bedspaces.php           # ✨✨ NEW - Bedspace browsing module
 │   ├── room_view.php           # Room detail view with gallery
 │   └── booking.php             # Room booking form
 ├── tenant/                     # Tenant portal
 │   ├── portal.php              # Tenant dashboard
 │   ├── profile.php             # Profile management
 │   ├── bookings.php            # Tenant booking management
-│   ├── booking_calendar.php    # Tenant booking calendar
-│   ├── view_booking_details.php # ✨ Detailed booking information
+│   ├── booking_calendar.php    # ✨ Bedspace-aware calendar with visual indicators
+│   ├── view_booking_details.php # ✨ Enhanced with bedspace badges and pricing
 │   ├── payments.php            # ✨ Payment history with multi-room support
 │   ├── make_payment.php        # ✨ PayPal payment initiation
 │   ├── payment_success.php     # ✨ PayPal success handler
@@ -238,6 +264,16 @@ dormitory-management-system/
 - `booking_conflicts` - ✨ Booking conflict tracking
 - `notifications` - ✨ In-app notification system
 
+### Bedspacing Tables (Phase 7)
+- `bedspaces` - ✨✨ NEW - Individual bedspace inventory (A/B/C/D slots)
+  - `id` - Primary key
+  - `room_id` - Foreign key to rooms
+  - `bedspace_number` - Slot identifier (A, B, C, etc.)
+  - `description` - Optional bedspace details
+  - `status` - available/occupied/maintenance
+  - `current_tenant_id` - Currently assigned tenant
+  - `created_at`, `updated_at` - Timestamps
+
 ### PayPal Integration Tables (Phase 5)
 - `paypal_transactions` - ✨ PayPal order and capture tracking
   - `id` - Primary key
@@ -252,11 +288,11 @@ dormitory-management-system/
   - `payer_email` - PayPal payer email
   - `created_at`, `updated_at` - Timestamps
 
-### Enhanced Fields (Phase 4, 4.5 & 5)
-- **Bookings**: `duration_months`, `total_amount`, `approved_by`, `approved_at`, `rejected_reason`, `check_in_date`, `check_out_date`
+### Enhanced Fields (Phase 4, 4.5, 5 & 7)
+- **Bookings**: `duration_months`, `total_amount`, `approved_by`, `approved_at`, `rejected_reason`, `check_in_date`, `check_out_date`, `bedspace_id` ✨✨ NEW, `is_bedspace_booking` ✨✨ NEW
 - **Users**: `auth0_id`, `profile_picture`, `email_verified`, `remember_token`, `two_factor_enabled`
-- **Rooms**: `floor_number`, `category`, `has_wifi`, `has_ac`, `has_bathroom`
-- **Payments**: `paypal_transaction_id`, `paypal_capture_id` ✨ NEW
+- **Rooms**: `floor_number`, `category`, `has_wifi`, `has_ac`, `has_bathroom`, `is_bedspace` ✨✨ NEW, `total_bedspaces` ✨✨ NEW, `occupied_bedspaces` ✨✨ NEW, `price_per_bedspace` ✨✨ NEW
+- **Payments**: `paypal_transaction_id`, `paypal_capture_id` ✨ NEW, `bedspace_id` ✨✨ NEW
 
 ## New Features in Phase 4
 
@@ -326,6 +362,11 @@ dormitory-management-system/
 - ✅ Payment method badges (PayPal/Cash/Bank)
 - ✅ Animated card hover effects
 - ✅ Responsive grid layouts
+- ✅ Modern dropdown navigation system
+- ✅ Grouped navigation items (Accommodations, Browse, More)
+- ✅ Animated dropdown transitions with glassmorphism
+- ✅ Mobile-responsive accordion navigation
+- ✅ Click-outside-to-close dropdown functionality
 
 ---
 
@@ -401,11 +442,18 @@ dormitory-management-system/
 - [x] Phase 4.5: Single Sign-On using Auth0 ✅
 - [x] Phase 5: Payment Integration (PayPal) ✨ **COMPLETED**
 - [x] Phase 6: UI/UX Overhaul & Receipt System ✨ **COMPLETED**
-- [ ] Phase 7: Hostinger Production Deployment - **IN PROGRESS**
-- [ ] Phase 8: Email Notifications (SMTP integration)
-- [ ] Phase 9: Maintenance Request System
-- [ ] Phase 10: Testing & Security Hardening
-- [ ] Phase 11: Advanced Features (2FA, etc.)
+- [x] Phase 7: Bedspacing System ✨ **COMPLETED**
+  - [x] Database schema with bedspaces table
+  - [x] Admin bedspace management module
+  - [x] Public bedspace browsing
+  - [x] Bedspace booking integration
+  - [x] Visual indicators in calendar and booking details
+  - [x] Dropdown navigation system
+- [ ] Phase 8: Hostinger Production Deployment - **IN PROGRESS**
+- [ ] Phase 9: Email Notifications (SMTP integration)
+- [ ] Phase 10: Maintenance Request System
+- [ ] Phase 11: Testing & Security Hardening
+- [ ] Phase 12: Advanced Features (2FA, etc.)
 
 ## Project Statistics
 
@@ -450,6 +498,9 @@ dormitory-management-system/
 - Rounded corners (8px-20px)
 - Soft shadows for depth
 - Smooth transitions (0.3s ease)
+- Dropdown menus with animated transitions
+- Visual bedspace indicators (blue gradient dots, badges)
+- Mobile-responsive accordion navigation
 
 ## Auth0 Configuration
 
@@ -566,8 +617,113 @@ For support and questions, please contact the system administrator.
 
 ---
 
-**Current Version**: 3.0.0
+**Current Version**: 3.1.0
 
-**Last Updated**: November 27, 2025
+**Last Updated**: November 29, 2025
 
-**Status**: ✅ Phase 1, 2, 3, 4, 4.5, 5, 6 Complete - Phase 7 (Hostinger Deployment) In Progress
+**Status**: ✅ Phase 1-7 Complete | Phase 8 In Progress
+
+## New Features in Phase 7 (Bedspacing)
+
+### Bedspacing System
+- ✅ Philippine-style bedspace rental model (rent individual beds in shared rooms)
+- ✅ Database schema with `bedspaces` table and room enhancements
+- ✅ Admin bedspace management submodule (`admin/bedspaces.php`)
+- ✅ Public bedspace browsing module (`public/bedspaces.php`)
+- ✅ Visual A/B/C/D slot management with color-coded status
+- ✅ Bedspace selection in booking process
+- ✅ Pricing per bedspace vs per room
+- ✅ Occupancy tracking (total vs occupied bedspaces)
+- ✅ Roommate display for shared room tenants
+- ✅ Bedspace release on booking cancellation
+- ✅ Two-tab interface (All Bedspaces + Room Overview)
+- ✅ Advanced filtering (room, status, search)
+- ✅ Real-time statistics dashboard
+- ✅ Status management (available/occupied/maintenance)
+- ✅ Integrated with booking, payment, and tenant workflows
+
+### Bedspace Visual Indicators (Phase 7.5)
+- ✅ **Booking Calendar Integration**
+  - Blue gradient event dots with 🛏️ bed icon for bedspace bookings
+  - Distinct from room bookings (purple dots with 🏠 icon)
+  - Tooltips showing "Room 101 Bed A - Status"
+  - Bedspace badges in upcoming bookings sidebar
+  - Correct bedspace pricing display (₱1,500)
+  - Color-coded by booking status
+
+- ✅ **Booking Details Enhancement**
+  - Prominent blue "BEDSPACE" badge in hero section
+  - 🛏️ bed icon vs 🏠 house icon for visual distinction
+  - Dynamic page title: "Room 101 Bed A" for bedspaces
+  - Correct bedspace pricing with clear labels
+  - New "Booking Type" field with visual badges
+  - Reference full room rate for comparison
+  - Bedspace number display with badge styling
+  - "(Bedspace pricing)" and "(Reference only)" notes
+
+### Modern Navigation System (Phase 7.5)
+- ✅ **Dropdown Menu Architecture**
+  - Grouped navigation items for better organization
+  - Admin: "Accommodations" dropdown (Rooms, Bedspaces)
+  - Admin: "More" dropdown (Announcements, Reports)
+  - Tenant/Public: "Browse" dropdown (Rooms, Bedspaces)
+  - Solves navigation overflow issues
+
+- ✅ **Visual Design**
+  - Glassmorphism dropdown cards with backdrop blur
+  - Smooth opacity and transform animations
+  - Rotating arrow indicators (180° transition)
+  - Hover effects with padding-left animation
+  - Active state with gradient background and left border
+  - Professional box shadows for depth
+
+- ✅ **Responsive Behavior**
+  - Desktop: Absolute positioned dropdowns below toggle
+  - Mobile (1100px): Accordion-style with max-height transitions
+  - Click-outside-to-close functionality
+  - One dropdown open at a time
+  - Smooth transitions on all screen sizes
+
+- ✅ **Navigation Groups**
+  ```
+  Admin Navigation:
+  - Dashboard
+  - Tenants
+  - Accommodations ▼ (Rooms, Bedspaces)
+  - Bookings
+  - Payments
+  - More ▼ (Announcements, Reports)
+  - Profile (avatar)
+  - Logout
+
+  Tenant/Public Navigation:
+  - Portal/Home
+  - Browse ▼ (Rooms, Bedspaces)
+  - My Bookings / Login
+  - Payments
+  - Profile (avatar)
+  - Logout
+  ```
+
+### UI/UX Enhancements
+- ✅ Responsive bedspace cards with gradient designs
+- ✅ Visual occupancy bars and slot grids
+- ✅ Modal confirmations for bedspace release
+- ✅ Navigation integration (Admin + Tenant + Guest)
+- ✅ Homepage bedspace statistics
+- ✅ Mobile-optimized layouts
+- ✅ Bedspace visual indicators in booking calendar
+  - Blue gradient event dots with 🛏️ icon
+  - Tooltips showing room and bedspace number
+  - Bedspace badges in upcoming bookings
+- ✅ Bedspace context in booking details page
+  - Hero section with bedspace badge and icon
+  - Correct bedspace pricing display
+  - Booking type field distinction
+  - Reference room pricing for comparison
+- ✅ Modern dropdown navigation system
+  - Grouped menu items (Accommodations, Browse, More)
+  - Glassmorphism dropdown cards
+  - Smooth animations and transitions
+  - Mobile accordion behavior
+  - Click-outside-to-close functionality

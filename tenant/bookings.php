@@ -13,10 +13,12 @@ $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Build query
 $query = "
-    SELECT b.*, r.room_number, r.room_type, r.price, r.floor_number,
-           (SELECT photo_path FROM room_photos WHERE room_id = r.id AND is_primary = 1 LIMIT 1) as room_photo
+    SELECT b.*, r.room_number, r.room_type, r.price, r.floor_number, r.is_bedspace, r.price_per_bedspace,
+           (SELECT photo_path FROM room_photos WHERE room_id = r.id AND is_primary = 1 LIMIT 1) as room_photo,
+           bs.bedspace_number
     FROM bookings b 
     JOIN rooms r ON b.room_id = r.id 
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     WHERE b.tenant_id = ?
 ";
 
@@ -575,7 +577,12 @@ require_once '../includes/header.php';
                     
                     <div class="booking-content-section">
                         <div class="booking-header-info">
-                            <h3>Room <?php echo htmlspecialchars($booking['room_number']); ?></h3>
+                            <h3>
+                                Room <?php echo htmlspecialchars($booking['room_number']); ?>
+                                <?php if ($booking['is_bedspace_booking'] && $booking['bedspace_number']): ?>
+                                    <span class="badge badge-info" style="font-size: 0.8rem; margin-left: 0.5rem;">Bedspace <?php echo htmlspecialchars($booking['bedspace_number']); ?></span>
+                                <?php endif; ?>
+                            </h3>
                             <div class="booking-meta-info">
                                 <span class="booking-meta-item">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -648,6 +655,11 @@ require_once '../includes/header.php';
                                     class="btn-enhanced danger sm" style="white-space: nowrap;">
                                 Cancel
                             </button>
+                        <?php elseif ($booking['status'] === 'checked_in'): ?>
+                            <button onclick="showCheckoutModal(<?php echo $booking['id']; ?>)" 
+                                    class="btn-enhanced warning sm" style="white-space: nowrap;">
+                                🚪 Check Out
+                            </button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -693,6 +705,26 @@ require_once '../includes/header.php';
     </div>
 </div>
 
+<!-- Checkout Modal -->
+<div id="checkoutModal" class="cancel-modal-overlay">
+    <div class="cancel-modal-content">
+        <h3>🚪 Check Out</h3>
+        <p>Are you sure you want to check out? This will mark your stay as complete and the room will become available.</p>
+        <form id="checkoutForm" method="POST" action="<?php echo TENANT_URL; ?>/checkout_booking">
+            <input type="hidden" name="booking_id" id="checkoutBookingId">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+            <div class="cancel-modal-actions">
+                <button type="button" onclick="hideCheckoutModal()" class="btn-enhanced outline" style="flex: 1;">
+                    Not Yet
+                </button>
+                <button type="submit" class="btn-enhanced warning" style="flex: 1;">
+                    Yes, Check Out
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function showCancelModal(bookingId) {
     document.getElementById('cancelBookingId').value = bookingId;
@@ -703,6 +735,15 @@ function hideCancelModal() {
     document.getElementById('cancelModal').classList.remove('active');
 }
 
+function showCheckoutModal(bookingId) {
+    document.getElementById('checkoutBookingId').value = bookingId;
+    document.getElementById('checkoutModal').classList.add('active');
+}
+
+function hideCheckoutModal() {
+    document.getElementById('checkoutModal').classList.remove('active');
+}
+
 // Close modal on outside click
 document.getElementById('cancelModal').addEventListener('click', function(e) {
     if (e.target === this) {
@@ -710,10 +751,17 @@ document.getElementById('cancelModal').addEventListener('click', function(e) {
     }
 });
 
+document.getElementById('checkoutModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideCheckoutModal();
+    }
+});
+
 // Close modal on Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         hideCancelModal();
+        hideCheckoutModal();
     }
 });
 </script>

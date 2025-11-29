@@ -9,9 +9,12 @@ $tenant_id = $_SESSION['user_id'];
 
 // Get ALL tenant's active bookings for "Make Payment" buttons
 $bookings_query = $conn->prepare("
-    SELECT b.id, b.status, b.room_id, r.room_number, r.price, r.room_type
+    SELECT b.id, b.status, b.room_id, b.is_bedspace_booking, b.bedspace_id,
+           r.room_number, r.price, r.room_type, r.is_bedspace, r.price_per_bedspace,
+           bs.bedspace_number
     FROM bookings b
     JOIN rooms r ON b.room_id = r.id
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     WHERE b.tenant_id = ? AND b.status IN ('approved', 'checked_in')
     ORDER BY r.room_number ASC
 ");
@@ -28,10 +31,12 @@ $room_filter = isset($_GET['room']) ? (int)$_GET['room'] : 0;
 // Build query
 $query = "
     SELECT p.*, b.id as booking_id, r.room_number, r.room_type,
-           pt.payer_email as paypal_email, pt.capture_id as paypal_capture
+           pt.payer_email as paypal_email, pt.capture_id as paypal_capture,
+           bs.bedspace_number
     FROM payments p
     LEFT JOIN bookings b ON p.booking_id = b.id
     LEFT JOIN rooms r ON p.room_id = r.id
+    LEFT JOIN bedspaces bs ON p.bedspace_id = bs.id
     LEFT JOIN paypal_transactions pt ON p.paypal_transaction_id = pt.paypal_order_id
     WHERE p.tenant_id = ?
 ";
@@ -558,6 +563,12 @@ require_once '../includes/header.php';
         font-size: 0.875rem;
     }
     
+    .room-badge.bedspace {
+        background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+        color: #1e40af;
+        border: 1px solid #60a5fa;
+    }
+    
     /* Empty State */
     .empty-state-payments {
         text-align: center;
@@ -685,18 +696,35 @@ require_once '../includes/header.php';
         <h2>🏠 Your Active Rooms - Make a Payment</h2>
         <div class="bookings-grid">
             <?php foreach ($active_bookings as $booking): ?>
+                <?php 
+                $display_price = $booking['is_bedspace_booking'] && $booking['price_per_bedspace'] 
+                    ? $booking['price_per_bedspace'] 
+                    : $booking['price'];
+                $is_bedspace = $booking['is_bedspace_booking'] && $booking['bedspace_number'];
+                ?>
                 <div class="booking-payment-card">
                     <div class="booking-room-info">
                         <div>
-                            <div class="booking-room-number">Room <?php echo htmlspecialchars($booking['room_number']); ?></div>
-                            <div class="booking-room-type"><?php echo ucfirst(htmlspecialchars($booking['room_type'])); ?></div>
+                            <div class="booking-room-number">
+                                <?php if ($is_bedspace): ?>
+                                    🛏️ Room <?php echo htmlspecialchars($booking['room_number']); ?> Bed <?php echo htmlspecialchars($booking['bedspace_number']); ?>
+                                <?php else: ?>
+                                    Room <?php echo htmlspecialchars($booking['room_number']); ?>
+                                <?php endif; ?>
+                            </div>
+                            <div class="booking-room-type">
+                                <?php echo $is_bedspace ? 'Bedspace' : ucfirst(htmlspecialchars($booking['room_type'])); ?>
+                            </div>
                         </div>
                         <span class="booking-status-badge">
                             <?php echo ucfirst(str_replace('_', ' ', $booking['status'])); ?>
                         </span>
                     </div>
                     <div class="booking-price">
-                        <?php echo format_currency($booking['price']); ?> / month
+                        <?php echo format_currency($display_price); ?> / month
+                        <?php if ($is_bedspace): ?>
+                            <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Bedspace Rental</div>
+                        <?php endif; ?>
                     </div>
                     <a href="<?php echo TENANT_URL; ?>/make_payment?booking_id=<?php echo $booking['id']; ?>" class="booking-pay-btn paypal">
                         🅿️ Pay with PayPal
@@ -858,9 +886,17 @@ require_once '../includes/header.php';
                                     </td>
                                     <td>
                                         <?php if ($payment['room_number']): ?>
-                                            <span class="room-badge">
-                                                🏠 <?php echo htmlspecialchars($payment['room_number']); ?>
-                                            </span>
+                                            <?php if ($payment['bedspace_number']): ?>
+                                                <span class="room-badge bedspace">
+                                                    🛏️ Room <?php echo htmlspecialchars($payment['room_number']); ?> Bed <?php echo htmlspecialchars($payment['bedspace_number']); ?>
+                                                </span>
+                                                <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.25rem;">Bedspace</div>
+                                            <?php else: ?>
+                                                <span class="room-badge">
+                                                    🏠 Room <?php echo htmlspecialchars($payment['room_number']); ?>
+                                                </span>
+                                                <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.25rem;">Full Room</div>
+                                            <?php endif; ?>
                                         <?php else: ?>
                                             <span style="color: #94a3b8;">N/A</span>
                                         <?php endif; ?>

@@ -4,6 +4,7 @@ require_once '../config/database.php';
 require_once '../includes/tenant_auth.php';
 require_once '../includes/functions.php';
 require_once '../includes/booking_functions.php';
+require_once '../includes/bedspace_functions.php';
 
 $page_title = 'Book a Room';
 $error = '';
@@ -18,6 +19,7 @@ $room_id = intval($_GET['room_id']);
 $stmt = $conn->prepare("
     SELECT id, room_number, room_type, capacity, price, status, 
            description, floor_number, category, has_wifi, has_ac, has_bathroom,
+           is_bedspace, total_bedspaces, occupied_bedspaces, price_per_bedspace,
            (SELECT photo_path FROM room_photos WHERE room_id = rooms.id AND is_primary = 1 LIMIT 1) as primary_photo
     FROM rooms 
     WHERE id = ? AND status = 'available'
@@ -34,6 +36,16 @@ if ($result->num_rows === 0) {
 $room = $result->fetch_assoc();
 $stmt->close();
 
+// Get available bedspaces if this is a bedspace room
+$available_bedspaces = [];
+if ($room['is_bedspace']) {
+    $available_bedspaces = get_available_bedspaces($conn, $room_id);
+    if (empty($available_bedspaces)) {
+        set_flash_message('No bedspaces available in this room', 'error');
+        redirect('public/rooms');
+    }
+}
+
 // Debug: Check if price exists
 if (!isset($room['price']) || $room['price'] === null) {
     error_log("Price missing for room ID: " . $room_id);
@@ -49,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $start_date = sanitize_input($_POST['start_date']);
         $end_date = sanitize_input($_POST['end_date']);
         $notes = sanitize_input($_POST['notes']);
+        $bedspace_id = $room['is_bedspace'] && isset($_POST['bedspace_id']) ? intval($_POST['bedspace_id']) : null;
         
         // Validate dates
         $start = new DateTime($start_date);
@@ -61,25 +74,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Start date cannot be in the past';
         } elseif ($end <= $start) {
             $error = 'End date must be after start date';
+        } elseif ($room['is_bedspace'] && !$bedspace_id) {
+            $error = 'Please select a bedspace';
         } elseif (!isset($room['price']) || $room['price'] <= 0) {
             $error = 'Invalid room pricing. Please contact administration.';
         } else {
-            // Check availability
-            if (!check_room_availability($conn, $room_id, $start_date, $end_date)) {
-                $error = 'Room is not available for the selected dates';
+            // For bedspace rooms, check bedspace availability
+            if ($room['is_bedspace']) {
+                if (!is_bedspace_available($conn, $bedspace_id)) {
+                    $error = 'Selected bedspace is no longer available';
+                } else {
+                    // Calculate total based on bedspace price
+                    $calculation = calculate_booking_total($start_date, $end_date, $room['price_per_bedspace']);
+                    
+                    // Insert bedspace booking
+                    $insert_stmt = $conn->prepare("
+                        INSERT INTO bookings 
+                        (room_id, bedspace_id, is_bedspace_booking, tenant_id, start_date, end_date, duration_months, total_amount, status, notes, created_at) 
+                        VALUES (?, ?, 1, ?, ?, ?, ?, ?, 'pending', ?, NOW())
+                    ");
+                    $insert_stmt->bind_param("iiissids", $room_id, $bedspace_id, $tenant_id, $start_date, $end_date, 
+                        $calculation['months'], $calculation['total'], $notes);
+                }
             } else {
-                // Calculate duration and total
-                $calculation = calculate_booking_total($start_date, $end_date, $room['price']);
-                
-                // Insert booking
-                $insert_stmt = $conn->prepare("
-                    INSERT INTO bookings 
-                    (room_id, tenant_id, start_date, end_date, duration_months, total_amount, status, notes, created_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, NOW())
-                ");
-                $insert_stmt->bind_param("iissids", $room_id, $tenant_id, $start_date, $end_date, 
-                    $calculation['months'], $calculation['total'], $notes);
-                
+                // Check room availability for regular booking
+                if (!check_room_availability($conn, $room_id, $start_date, $end_date)) {
+                    $error = 'Room is not available for the selected dates';
+                } else {
+                    // Calculate duration and total
+                    $calculation = calculate_booking_total($start_date, $end_date, $room['price']);
+                    
+                    // Insert regular booking
+                    $insert_stmt = $conn->prepare("
+                        INSERT INTO bookings 
+                        (room_id, tenant_id, start_date, end_date, duration_months, total_amount, status, notes, created_at) 
+                        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, NOW())
+                    ");
+                    $insert_stmt->bind_param("iissids", $room_id, $tenant_id, $start_date, $end_date, 
+                        $calculation['months'], $calculation['total'], $notes);
+                }
+            }
+            
+            // Execute the booking if no errors
+            if (!$error && isset($insert_stmt)) {
                 if ($insert_stmt->execute()) {
                     $booking_id = $insert_stmt->insert_id;
                     
@@ -642,6 +679,48 @@ require_once '../includes/header.php';
                 <form method="POST" action="" id="bookingForm">
                     <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                     
+                    <?php if ($room['is_bedspace']): ?>
+                    <!-- Bedspace Selection -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <span>🛏️</span>
+                            <span>Select Your Bedspace</span>
+                        </h3>
+                        
+                        <div class="info-notice" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: #059669;">
+                            <div class="info-notice-title" style="color: white;">
+                                <span>💡</span>
+                                <span>This is a Bedspacing Room</span>
+                            </div>
+                            <p style="color: white; opacity: 0.95;">
+                                This room offers individual bed rentals. Select your preferred bedspace below. 
+                                <?php echo count($available_bedspaces); ?> bedspace(s) currently available.
+                            </p>
+                        </div>
+                        
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced" for="bedspace_id">
+                                Choose Bedspace <span style="color: #ef4444;">*</span>
+                            </label>
+                            <select id="bedspace_id" name="bedspace_id" class="form-input-enhanced" required>
+                                <option value="">-- Select a Bedspace --</option>
+                                <?php foreach ($available_bedspaces as $bs): ?>
+                                    <option value="<?php echo $bs['id']; ?>">
+                                        Bedspace <?php echo htmlspecialchars($bs['bedspace_number']); ?>
+                                        <?php if ($bs['description']): ?>
+                                            - <?php echo htmlspecialchars($bs['description']); ?>
+                                        <?php endif; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="input-hint">
+                                <span>📌</span>
+                                <span>Each bedspace is individually rented at ₱<?php echo number_format($room['price_per_bedspace'], 0); ?>/month</span>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
                     <!-- Date Selection -->
                     <div class="form-section">
                         <h3 class="form-section-title">
@@ -741,11 +820,25 @@ require_once '../includes/header.php';
                         <div class="room-preview-info">
                             <h3 class="room-preview-number">Room <?php echo htmlspecialchars($room['room_number']); ?></h3>
                             <span class="room-preview-type"><?php echo ucfirst(htmlspecialchars($room['room_type'])); ?></span>
+                            <?php if ($room['is_bedspace']): ?>
+                                <span class="room-preview-type" style="background: #10b981; color: white; margin-top: 0.5rem; display: inline-block;">
+                                    🛏️ Bedspacing Room
+                                </span>
+                            <?php endif; ?>
                             
                             <div class="room-preview-features">
-                                <span class="room-preview-feature">
-                                    👥 <?php echo $room['capacity']; ?> person(s)
-                                </span>
+                                <?php if ($room['is_bedspace']): ?>
+                                    <span class="room-preview-feature">
+                                        🛏️ <?php echo $room['total_bedspaces']; ?> bedspaces
+                                    </span>
+                                    <span class="room-preview-feature">
+                                        ✅ <?php echo count($available_bedspaces); ?> available
+                                    </span>
+                                <?php else: ?>
+                                    <span class="room-preview-feature">
+                                        👥 <?php echo $room['capacity']; ?> person(s)
+                                    </span>
+                                <?php endif; ?>
                                 <?php if ($room['has_wifi']): ?>
                                     <span class="room-preview-feature">📶 WiFi</span>
                                 <?php endif; ?>
@@ -759,8 +852,8 @@ require_once '../includes/header.php';
                     <!-- Summary Details -->
                     <div class="summary-details">
                         <div class="summary-row">
-                            <span class="summary-label">Monthly Rate</span>
-                            <span class="summary-value">₱<?php echo number_format($room['price'] ?? 0, 2); ?></span>
+                            <span class="summary-label"><?php echo $room['is_bedspace'] ? 'Per Bedspace' : 'Monthly Rate'; ?></span>
+                            <span class="summary-value">₱<?php echo number_format($room['is_bedspace'] ? $room['price_per_bedspace'] : $room['price'], 2); ?></span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">Check-in Date</span>
@@ -783,8 +876,8 @@ require_once '../includes/header.php';
                             <span class="calculation-item-value" id="durationDisplay">-</span>
                         </div>
                         <div class="calculation-item">
-                            <span class="calculation-item-label">Monthly Rate</span>
-                            <span class="calculation-item-value">₱<?php echo number_format($room['price'] ?? 0, 2); ?></span>
+                            <span class="calculation-item-label"><?php echo $room['is_bedspace'] ? 'Per Bedspace' : 'Monthly Rate'; ?></span>
+                            <span class="calculation-item-value">₱<?php echo number_format($room['is_bedspace'] ? ($room['price_per_bedspace'] ?? 0) : ($room['price'] ?? 0), 2); ?></span>
                         </div>
                         <div class="calculation-item">
                             <span class="calculation-item-label">Total Amount</span>
@@ -805,8 +898,9 @@ require_once '../includes/header.php';
 </div>
 
 <script>
-const pricePerMonth = <?php echo json_encode($room['price'] ?? 0); ?>;
+const pricePerMonth = <?php echo json_encode($room['is_bedspace'] ? ($room['price_per_bedspace'] ?? 0) : ($room['price'] ?? 0)); ?>;
 const roomId = <?php echo $room_id; ?>;
+const isBedspace = <?php echo json_encode($room['is_bedspace'] ? true : false); ?>;
 
 document.addEventListener('DOMContentLoaded', function() {
     const startDateInput = document.getElementById('start_date');

@@ -3,13 +3,14 @@
 require_once '../config/database.php';
 require_once '../includes/admin_auth.php';
 require_once '../includes/functions.php';
+require_once '../includes/bedspace_functions.php';
 
 $page_title = 'Room Details';
 
 $room_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($room_id === 0) {
-    redirect('admin/rooms');
+    redirect(ADMIN_URL . '/rooms');
 }
 
 // Fetch room details
@@ -20,11 +21,59 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     set_flash_message('Room not found', 'error');
-    redirect('admin/rooms');
+    redirect(ADMIN_URL . '/rooms');
 }
 
 $room = $result->fetch_assoc();
 $stmt->close();
+
+// Get bedspaces if this is a bedspace room
+$bedspaces = [];
+if ($room['is_bedspace']) {
+    $bedspaces = get_room_bedspaces($conn, $room_id);
+}
+
+// Handle bedspace conversion
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'convert_to_bedspace') {
+    if (verify_csrf_token($_POST['csrf_token'])) {
+        $bedspace_count = intval($_POST['bedspace_count']);
+        $price_per_bedspace = floatval($_POST['price_per_bedspace']);
+        
+        if (convert_to_bedspace_room($conn, $room_id, $bedspace_count, $price_per_bedspace)) {
+            set_flash_message('Room converted to bedspace successfully!', 'success');
+        } else {
+            set_flash_message('Failed to convert room to bedspace', 'error');
+        }
+        redirect(ADMIN_URL . "/room_details?id=$room_id");
+    }
+}
+
+// Handle bedspace to regular conversion
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'convert_to_regular') {
+    if (verify_csrf_token($_POST['csrf_token'])) {
+        if (convert_to_regular_room($conn, $room_id)) {
+            set_flash_message('Room converted to regular rental successfully!', 'success');
+        } else {
+            set_flash_message('Cannot convert - bedspaces are currently occupied', 'error');
+        }
+        redirect(ADMIN_URL . "/room_details?id=$room_id");
+    }
+}
+
+// Handle bedspace status update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_bedspace_status') {
+    if (verify_csrf_token($_POST['csrf_token'])) {
+        $bedspace_id = intval($_POST['bedspace_id']);
+        $new_status = sanitize_input($_POST['status']);
+        
+        if (update_bedspace_status($conn, $bedspace_id, $new_status)) {
+            set_flash_message('Bedspace status updated!', 'success');
+        } else {
+            set_flash_message('Failed to update bedspace status', 'error');
+        }
+        redirect(ADMIN_URL . "/room_details?id=$room_id");
+    }
+}
 
 // Handle room update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_room') {
@@ -56,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         
         if ($update_stmt->execute()) {
             set_flash_message('Room updated successfully! 🎉', 'success');
-            redirect("admin/room_details?id=$room_id");
+            redirect(ADMIN_URL . "/room_details?id=$room_id");
         } else {
             set_flash_message('Failed to update room', 'error');
         }
@@ -90,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
                 
                 $insert_photo->close();
-                redirect("admin/room_details?id=$room_id");
+                redirect(ADMIN_URL . "/room_details?id=$room_id");
             } else {
                 set_flash_message($upload_result['message'], 'error');
             }
@@ -131,7 +180,7 @@ if (isset($_GET['delete_photo']) && verify_csrf_token($_GET['csrf_token'])) {
     }
     $photo_stmt->close();
     
-    redirect("admin/room_details?id=$room_id");
+    redirect(ADMIN_URL . "/room_details?id=$room_id");
 }
 
 // Handle set primary photo
@@ -150,7 +199,7 @@ if (isset($_GET['set_primary']) && verify_csrf_token($_GET['csrf_token'])) {
     }
     $primary_stmt->close();
     
-    redirect("admin/room_details?id=$room_id");
+    redirect(ADMIN_URL . "/room_details?id=$room_id");
 }
 
 // Fetch room photos
@@ -798,9 +847,9 @@ require_once '../includes/header.php';
     <div class="container">
         <!-- Breadcrumb -->
         <nav class="breadcrumb-admin">
-            <a href="dashboard">Dashboard</a>
+            <a href="<?php echo ADMIN_URL; ?>/dashboard">Dashboard</a>
             <span>→</span>
-            <a href="rooms">Rooms</a>
+            <a href="<?php echo ADMIN_URL; ?>/rooms">Rooms</a>
             <span>→</span>
             <span>Room <?php echo htmlspecialchars($room['room_number']); ?></span>
         </nav>
@@ -826,7 +875,7 @@ require_once '../includes/header.php';
                             <span>👁️</span>
                             <span>Preview</span>
                         </a>
-                        <a href="rooms" class="header-btn secondary">
+                        <a href="<?php echo ADMIN_URL; ?>/rooms" class="header-btn secondary">
                             <span>←</span>
                             <span>Back to Rooms</span>
                         </a>
@@ -1060,7 +1109,7 @@ require_once '../includes/header.php';
                                 <span>💾</span>
                                 <span>Save Changes</span>
                             </button>
-                            <a href="rooms" class="btn-modern secondary">
+                            <a href="<?php echo ADMIN_URL; ?>/rooms" class="btn-modern secondary">
                                 <span>✕</span>
                                 <span>Cancel</span>
                             </a>
@@ -1170,10 +1219,179 @@ require_once '../includes/header.php';
                         </div>
                     <?php endif; ?>
                 </div>
+                
+                <!-- Bedspace Management Section -->
+                <?php if ($room['is_bedspace']): ?>
+                <div class="photo-card" style="margin-top: 1.5rem;">
+                    <h3 class="photo-card-title">
+                        <span>🛏️</span>
+                        Bedspace Management
+                    </h3>
+                    
+                    <div class="alert-box success">
+                        <span class="alert-icon">✓</span>
+                        <div class="alert-content">
+                            <div class="alert-title">Bedspace Room</div>
+                            <p class="alert-text">
+                                <strong><?php echo $room['total_bedspaces']; ?> bedspaces</strong> total<br>
+                                <strong><?php echo $room['occupied_bedspaces']; ?> occupied</strong>, 
+                                <strong><?php echo $room['total_bedspaces'] - $room['occupied_bedspaces']; ?> available</strong><br>
+                                ₱<?php echo number_format($room['price_per_bedspace'], 2); ?> per bedspace/month
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                        <?php foreach ($bedspaces as $bs): ?>
+                            <div class="bedspace-card-admin <?php echo $bs['status']; ?>">
+                                <div class="bedspace-number-large"><?php echo htmlspecialchars($bs['bedspace_number']); ?></div>
+                                <div class="bedspace-status-badge <?php echo $bs['status']; ?>">
+                                    <?php echo ucfirst($bs['status']); ?>
+                                </div>
+                                <?php if ($bs['current_tenant_id']): ?>
+                                    <div class="bedspace-tenant-info">
+                                        <a href="<?php echo ADMIN_URL; ?>/tenant_details?id=<?php echo $bs['current_tenant_id']; ?>" style="color: inherit; text-decoration: none;">
+                                            <?php echo htmlspecialchars($bs['first_name'] . ' ' . $bs['last_name']); ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if ($bs['status'] !== 'occupied'): ?>
+                                    <form method="POST" style="margin-top: 0.5rem;">
+                                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                                        <input type="hidden" name="action" value="update_bedspace_status">
+                                        <input type="hidden" name="bedspace_id" value="<?php echo $bs['id']; ?>">
+                                        <select name="status" class="bedspace-status-select" onchange="this.form.submit()">
+                                            <option value="available" <?php echo $bs['status'] === 'available' ? 'selected' : ''; ?>>Available</option>
+                                            <option value="maintenance" <?php echo $bs['status'] === 'maintenance' ? 'selected' : ''; ?>>Maintenance</option>
+                                        </select>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <form method="POST" onsubmit="return confirm('⚠️ Convert back to regular room? All bedspaces must be vacant.');">
+                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                        <input type="hidden" name="action" value="convert_to_regular">
+                        <button type="submit" class="btn-secondary" style="width: 100%;">
+                            Convert to Regular Room
+                        </button>
+                    </form>
+                </div>
+                <?php else: ?>
+                <div class="photo-card" style="margin-top: 1.5rem;">
+                    <h3 class="photo-card-title">
+                        <span>🛏️</span>
+                        Enable Bedspacing
+                    </h3>
+                    
+                    <div class="alert-box info">
+                        <span class="alert-icon">ℹ️</span>
+                        <div class="alert-content">
+                            <div class="alert-title">What is Bedspacing?</div>
+                            <p class="alert-text">
+                                Bedspacing allows multiple tenants to rent individual beds within the same room at different prices. Perfect for dormitory-style accommodations!
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <form method="POST" onsubmit="return confirm('Convert this room to bedspacing?');">
+                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                        <input type="hidden" name="action" value="convert_to_bedspace">
+                        
+                        <div class="form-group-modern" style="margin-bottom: 1rem;">
+                            <label class="form-label-modern">Number of Bedspaces</label>
+                            <input type="number" name="bedspace_count" class="form-input-modern" min="2" max="12" value="4" required>
+                        </div>
+                        
+                        <div class="form-group-modern" style="margin-bottom: 1rem;">
+                            <label class="form-label-modern">Price per Bedspace (₱)</label>
+                            <input type="number" name="price_per_bedspace" class="form-input-modern" step="0.01" min="0" value="<?php echo $room['price'] / 4; ?>" required>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary" style="width: 100%;">
+                            Enable Bedspacing
+                        </button>
+                    </form>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.bedspace-card-admin {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.bedspace-card-admin.available {
+    border-color: #10b981;
+    background: #d1fae5;
+}
+
+.bedspace-card-admin.occupied {
+    border-color: #ef4444;
+    background: #fee2e2;
+}
+
+.bedspace-card-admin.maintenance {
+    border-color: #f59e0b;
+    background: #fef3c7;
+}
+
+.bedspace-number-large {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.bedspace-status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.bedspace-status-badge.available {
+    background: #10b981;
+    color: white;
+}
+
+.bedspace-status-badge.occupied {
+    background: #ef4444;
+    color: white;
+}
+
+.bedspace-status-badge.maintenance {
+    background: #f59e0b;
+    color: white;
+}
+
+.bedspace-tenant-info {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+.bedspace-status-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+</style>
 
 <script>
 // File upload interaction

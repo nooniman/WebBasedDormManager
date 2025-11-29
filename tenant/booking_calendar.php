@@ -20,9 +20,12 @@ $start_date = "$current_year-$current_month-01";
 $end_date = date('Y-m-t', strtotime($start_date));
 
 $bookings_query = "
-    SELECT b.*, r.room_number, r.room_type
+    SELECT b.*, r.room_number, r.room_type,
+           b.is_bedspace_booking, b.bedspace_id,
+           bs.bedspace_number
     FROM bookings b
     JOIN rooms r ON b.room_id = r.id
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     WHERE b.tenant_id = ?
     AND (
         (b.start_date BETWEEN ? AND ?)
@@ -63,9 +66,12 @@ $today = date('Y-m-d');
 $next_month = date('Y-m-d', strtotime('+30 days'));
 
 $upcoming_query = "
-    SELECT b.*, r.room_number, r.room_type, r.price
+    SELECT b.*, r.room_number, r.room_type, r.price, r.price_per_bedspace,
+           b.is_bedspace_booking, b.bedspace_id,
+           bs.bedspace_number
     FROM bookings b
     JOIN rooms r ON b.room_id = r.id
+    LEFT JOIN bedspaces bs ON b.bedspace_id = bs.id
     WHERE b.tenant_id = ?
     AND b.start_date BETWEEN ? AND ?
     AND b.status IN ('pending', 'approved')
@@ -280,6 +286,18 @@ require_once '../includes/header.php';
     .day-event-dot.checked_in { background: #3b82f6; }
     .day-event-dot.rejected { background: #ef4444; }
     .day-event-dot.cancelled { background: #94a3b8; }
+    .day-event-dot.bedspace { 
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        height: 6px;
+        position: relative;
+    }
+    .day-event-dot.bedspace::before {
+        content: '🛏️';
+        position: absolute;
+        left: 2px;
+        top: -8px;
+        font-size: 0.6rem;
+    }
     
     .day-event-count {
         font-size: 0.7rem;
@@ -382,6 +400,11 @@ require_once '../includes/header.php';
     
     .upcoming-item.pending { border-left-color: #f59e0b; }
     .upcoming-item.approved { border-left-color: #10b981; }
+    .upcoming-item.bedspace {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-left-color: #3b82f6;
+        border-left-width: 5px;
+    }
     
     .upcoming-date {
         font-size: 0.8rem;
@@ -402,6 +425,19 @@ require_once '../includes/header.php';
         display: flex;
         align-items: center;
         gap: 0.5rem;
+    }
+    
+    .bedspace-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+        color: #1e40af;
+        border: 1px solid #60a5fa;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     /* Empty State */
@@ -599,9 +635,16 @@ require_once '../includes/header.php';
                     $has_booking = !empty($day_bookings);
                     
                     $status_class = '';
+                    $has_bedspace = false;
                     if ($has_booking) {
                         $primary_booking = $day_bookings[0];
                         $status_class = $primary_booking['status'];
+                        foreach ($day_bookings as $db) {
+                            if ($db['is_bedspace_booking']) {
+                                $has_bedspace = true;
+                                break;
+                            }
+                        }
                     }
                     
                     $class = 'calendar-day';
@@ -612,15 +655,28 @@ require_once '../includes/header.php';
                         <div class="day-number"><?php echo $day; ?></div>
                         <?php if ($has_booking): ?>
                             <div class="day-events">
-                                <?php foreach (array_slice($day_bookings, 0, 3) as $booking): ?>
-                                    <div class="day-event-dot <?php echo $booking['status']; ?>"></div>
+                                <?php foreach (array_slice($day_bookings, 0, 3) as $booking): 
+                                    $dot_class = 'day-event-dot ' . $booking['status'];
+                                    if ($booking['is_bedspace_booking']) {
+                                        $dot_class .= ' bedspace';
+                                    }
+                                ?>
+                                    <div class="<?php echo $dot_class; ?>"></div>
                                 <?php endforeach; ?>
                                 <?php if (count($day_bookings) > 3): ?>
                                     <div class="day-event-count">+<?php echo count($day_bookings) - 3; ?> more</div>
                                 <?php endif; ?>
                             </div>
                             <div class="calendar-tooltip">
-                                <?php echo count($day_bookings); ?> booking(s)
+                                <?php 
+                                foreach ($day_bookings as $db) {
+                                    $room_label = $db['is_bedspace_booking'] && $db['bedspace_number'] 
+                                        ? "Room {$db['room_number']} Bed {$db['bedspace_number']}" 
+                                        : "Room {$db['room_number']}";
+                                    echo $room_label . ' - ' . ucfirst($db['status']);
+                                    if (count($day_bookings) > 1) echo '<br>';
+                                }
+                                ?>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -667,14 +723,29 @@ require_once '../includes/header.php';
                 <h3>🔔 Upcoming Bookings</h3>
                 <?php if ($upcoming_result && $upcoming_result->num_rows > 0): ?>
                     <div class="upcoming-list">
-                        <?php while ($upcoming = $upcoming_result->fetch_assoc()): ?>
-                            <div class="upcoming-item <?php echo $upcoming['status']; ?>"
+                        <?php while ($upcoming = $upcoming_result->fetch_assoc()): 
+                            $upcoming_class = 'upcoming-item ' . $upcoming['status'];
+                            if ($upcoming['is_bedspace_booking']) {
+                                $upcoming_class .= ' bedspace';
+                            }
+                            $room_display = $upcoming['is_bedspace_booking'] && $upcoming['bedspace_number']
+                                ? "Room {$upcoming['room_number']} Bed {$upcoming['bedspace_number']}"
+                                : "Room {$upcoming['room_number']}";
+                            $price_display = $upcoming['is_bedspace_booking'] && $upcoming['price_per_bedspace']
+                                ? $upcoming['price_per_bedspace']
+                                : $upcoming['price'];
+                        ?>
+                            <div class="<?php echo $upcoming_class; ?>"
                                  onclick="window.location='<?php echo TENANT_URL; ?>/view_booking_details?id=<?php echo $upcoming['id']; ?>'">
                                 <div class="upcoming-date">
-                                    <?php echo date('M d, Y', strtotime($upcoming['start_date'])); ?>
+                                    📅 <?php echo date('M d, Y', strtotime($upcoming['start_date'])); ?>
                                 </div>
                                 <div class="upcoming-room">
-                                    Room <?php echo htmlspecialchars($upcoming['room_number']); ?>
+                                    <?php echo $upcoming['is_bedspace_booking'] ? '🛏️' : '🏠'; ?>
+                                    <?php echo htmlspecialchars($room_display); ?>
+                                    <?php if ($upcoming['is_bedspace_booking']): ?>
+                                        <span class="bedspace-badge">Bedspace</span>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="upcoming-details">
                                     <span class="badge-enhanced sm <?php 
@@ -682,7 +753,7 @@ require_once '../includes/header.php';
                                     ?>">
                                         <?php echo ucfirst($upcoming['status']); ?>
                                     </span>
-                                    <span><?php echo format_currency($upcoming['price']); ?>/mo</span>
+                                    <span>₱<?php echo number_format($price_display, 2); ?>/mo</span>
                                 </div>
                             </div>
                         <?php endwhile; ?>

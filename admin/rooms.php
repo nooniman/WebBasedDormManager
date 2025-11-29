@@ -134,7 +134,11 @@ $query = "
     SELECT r.*, 
            (SELECT photo_path FROM room_photos WHERE room_id = r.id AND is_primary = 1 LIMIT 1) as primary_photo,
            (SELECT COUNT(*) FROM room_photos WHERE room_id = r.id) as photo_count,
-           (SELECT COUNT(*) FROM bookings WHERE room_id = r.id AND status IN ('pending', 'approved', 'checked_in')) as active_bookings
+           (SELECT COUNT(*) FROM bookings WHERE room_id = r.id AND status IN ('pending', 'approved', 'checked_in')) as active_bookings,
+           CASE 
+               WHEN r.is_bedspace = TRUE THEN CONCAT(r.total_bedspaces - r.occupied_bedspaces, '/', r.total_bedspaces)
+               ELSE NULL
+           END as bedspace_availability
     FROM rooms r 
     WHERE 1=1
 ";
